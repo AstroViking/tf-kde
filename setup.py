@@ -1,4 +1,10 @@
+import os
 from setuptools import setup
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+with open(os.path.join(here, 'requirements.txt'), encoding='utf-8') as requirements_file:
+    requirements = requirements_file.read().splitlines()
 
 setup(name='tf-kde',
       version='0.1',
@@ -8,4 +14,5 @@ setup(name='tf-kde',
       author_email='astroviking@protonmail.com',
       license='WTFPL',
       packages=['tf-kde'],
+      install_requires=requirements,
       zip_safe=False)

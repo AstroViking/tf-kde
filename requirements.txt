@@ -1,0 +1,14 @@
+tensorflow>=2.2
+tensorflow_probability>=0.9
+scipy>=1.2
+uproot
+pandas
+numpy>=1.16
+iminuit
+colorlog
+texttable
+tabulate
+colored
+colorama
+ordered-set
+numdifftools

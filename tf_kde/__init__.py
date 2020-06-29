@@ -1,3 +1,3 @@
-from . import timer, performance
+from . import KernelDensityEstimation
 
 __all__ = ["KernelDensityEstimation"]

@@ -22,24 +22,3 @@ mix_3gauss_1exp_1uni = tfd.Mixture(
 
 data = mix_3gauss_1exp_1uni.sample(sample_shape=n_datapoints, seed=r_seed)
 data = data.numpy()
-
-#n_testpoints = 200
-
-#dist = KernelDensityEstimation(bandwidth=0.01, data=data)
-
-#x = np.linspace(-5.0, 5.0, num=n_testpoints, dtype=np.float32)
-#y = dist.prob(x)
-#print(y)
-
-#dist2 = KernelDensityEstimation(bandwidth=0.01, data=data, kernel='epanechnikov')
-#y2 = dist2.prob(x)
-#print(y2)
-
-
-#f = lambda x: tfd.Independent(tfd.Normal(loc=data, scale=1.))
-#n = tf.cast(tf.size(data), tf.float32)
-#kde = tfd.MixtureSameFamily(mixture_distribution=tfd.Categorical(probs=[1 / n] * n), components_distribution=f(data))
-
-#y3 = kde._prob(x)
-
-#print(y3)

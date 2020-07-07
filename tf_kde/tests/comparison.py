@@ -125,3 +125,4 @@ print(methods)
 
 ax = estimations.plot(x='x', y=['basic', 'KDEpy', 'basicTF', 'tfp', 'tfpM', 'tfpMB', 'tfpMFFT'], style=['-', '--', '-.', ':', '--', '-.', '--'])
 plt.show()
+

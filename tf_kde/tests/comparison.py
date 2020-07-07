@@ -38,8 +38,6 @@ def kde_kdepy_fft(data, x):
 @tf.function(autograph=False)
 def kde_basic_tf_internal(data, x, n_datapoints):
 
-    # TODO: Use tf-kde package here
-  
     h1 = 0.01
   
     fac = tf.constant(1.0 / np.sqrt(2.0 * np.pi), tf.float32)

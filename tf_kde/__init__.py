@@ -1,3 +1,3 @@
-from . import KernelDensityEstimation
+from . import distribution
 
-__all__ = ["KernelDensityEstimation"]
+__all__ = ["distribution"]

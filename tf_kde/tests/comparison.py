@@ -7,7 +7,7 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from test_distribution import data
+from tf_kde.tests.test_distribution import data
 
 
 n_testpoints = 200

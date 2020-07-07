@@ -5,7 +5,6 @@ from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimation
 from zfit_benchmark.timer import Timer
 import seaborn as sns
 import pandas as pd
-import matplotlib.pyplot as plt
 
 from tf_kde.tests.test_distribution import data
 
@@ -120,9 +119,4 @@ for index, method in methods.iterrows():
 
 methods.drop('function', axis=1, inplace=True)
 
-print(estimations)
-print(methods)
-
-ax = estimations.plot(x='x', y=['basic', 'KDEpy', 'basicTF', 'tfp', 'tfpM', 'tfpMB', 'tfpMFFT'], style=['-', '--', '-.', ':', '--', '-.', '--'])
-plt.show()
 

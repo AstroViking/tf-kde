@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 import tensorflow_probability.python.distributions as tfd
-from tf_kde.distribution import KernelDensityEstimation
 
 r_seed = 1978239485
 n_datapoints = 1000000

@@ -83,7 +83,7 @@ class KernelDensityEstimation(MixtureSameFamily):
                         weights=None):
 
         if weights is None:
-            weights = np.ones_like(self._data)
+            weights = tf.ones_like(self._data)
 
         grid_min = tf.math.reduce_min(self._grid)
         grid_max = tf.math.reduce_max(self._grid)
@@ -104,7 +104,7 @@ class KernelDensityEstimation(MixtureSameFamily):
 
         # If the data is not a subset of the grid, the integral values will be
         # outside of the grid. To solve the problem, we filter these values away
-        #unique_integrals = np.unique(integral)
+        #unique_integrals = tf.unique(integral)
         #unique_integrals = unique_integrals[(unique_integrals >= 0) & (unique_integrals <= len(grid_points))]
 
         bincount_left = tf.roll(tf.concat(tf.math.bincount(tf.cast(integral, tf.int32), weights=frac_weights), tf.constant(0)), shift=1, axis=0)

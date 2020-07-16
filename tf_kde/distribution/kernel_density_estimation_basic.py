@@ -98,7 +98,7 @@ class KernelDensityEstimationBasic(distribution.Distribution):
     def _prob(self, x):
 
         if self._use_FFT == False:
-            calc_value = lambda x: tf.math.multiply(tf.constant(1.0/(self._bandwidth * tf.cast(tf.size(self._data), tf.float32))), tf.math.reduce_sum(self._kernels[self._kernel_name](tf.math.divide(tf.math.subtract(x, self._data), self._bandwidth))))  
+            calc_value = lambda x: tf.math.multiply(tf.constant(1.0)/(self._bandwidth * tf.cast(tf.size(self._data), tf.float32)), tf.math.reduce_sum(self._kernels[self._kernel_name](tf.math.divide(tf.math.subtract(x, self._data), self._bandwidth))))  
             results = tf.map_fn(calc_value, x)
         else:
           results = tf.zeros(tf.size(self._data))

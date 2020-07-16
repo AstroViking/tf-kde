@@ -1,15 +1,22 @@
 import tensorflow as tf
 import numpy as np
-from KDEpy import FFTKDE
-from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimationBasic
+import zfit as zfit
+from KDEpy import NaiveKDE, FFTKDE
+from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimationBasic, KernelDensityEstimationZfit
 from zfit_benchmark.timer import Timer
 import seaborn as sns
 import pandas as pd
 
 from tf_kde.tests.test_distribution import data
 
-
-n_testpoints = 200
+n_testpoints = 1024
+run_twice = True
+methods_to_evaluate = [
+    'basic',
+    'FFTKDEpy',
+    'zfitFFT',
+    'zfitFFTs'
+]
 
 def kde_basic(data, x):
 
@@ -30,6 +37,11 @@ def kde_basic(data, x):
 def kde_seaborn(data, x):
     sns.distplot(data, bins=1000, kde=True, rug=False)
     return np.NaN
+
+
+def kde_kdepy(data, x):
+    x = np.array(x)
+    return NaiveKDE(kernel="gaussian").fit(data).evaluate(x)
 
 def kde_kdepy_fft(data, x):
     x = np.array(x)
@@ -54,32 +66,79 @@ def kde_basic_tf(data, x):
     n_datapoints = data.size
     return kde_basic_tf_internal(data, x, n_datapoints).numpy()
 
-def kde_tfp(data, x):
+@tf.function(autograph=False)
+def kde_tfp_internal(data, x):
     dist = KernelDensityEstimationBasic(bandwidth=0.01, data=data)
-    return dist.prob(x).numpy()
+    return dist.prob(x)
+
+def kde_tfp(data, x):
+    return kde_tfp_internal(data, x).numpy()
+
+@tf.function(autograph=False)
+def kde_tfp_mixture_internal(data, x):
+    dist = KernelDensityEstimation(bandwidth=0.01, data=data)
+    return dist.prob(x)
 
 def kde_tfp_mixture(data, x):
-    dist = KernelDensityEstimation(bandwidth=0.01, data=data)
-    return dist.prob(x).numpy()
+    return kde_tfp_mixture_internal(data, x).numpy()
 
-def kde_tfp_mixture_with_binned_data(data, x):
+@tf.function(autograph=False)
+def kde_tfp_mixture_binned_internal(data, x):
     dist = KernelDensityEstimation(bandwidth=0.01, data=data, use_grid=True)
-    return dist.prob(x).numpy()
+    return dist.prob(x)
 
-def kde_tfp_mixture_with_fft(data, x):
-    dist = KernelDensityEstimation(bandwidth=0.01, data=data, use_grid=True, use_fft=True)
-    return dist.prob(x).numpy()
-  
+def kde_tfp_mixture_binned(data, x):
+    return kde_tfp_mixture_binned_internal(data, x).numpy()
+
+@tf.function(autograph=False)
+def kde_zfit_internal(data, x):
+    obs = zfit.Space('x', limits=(np.min(x), np.max(x)))
+    dist = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=0.01)
+    return dist.pdf(x)
+
+def kde_zfit(data, x):
+    return kde_zfit_internal(data.astype(np.float64), x).numpy()
+
+@tf.function(autograph=False)
+def kde_zfit_binned_internal(data, x):
+    obs = zfit.Space('x', limits=(np.min(x), np.max(x)))
+    dist = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=0.01, use_grid=True)
+    return dist.pdf(x)  
+
+def kde_zfit_binned(data, x):
+    return kde_zfit_binned_internal(data.astype(np.float64), x).numpy()
+
+@tf.function(autograph=False)
+def kde_zfit_fft_internal(data, x):
+    obs = zfit.Space('x', limits=(np.min(x), np.max(x)))
+    dist = KernelDensityEstimationZfit(obs=obs, data=data, num_grid_points=1024, bandwidth=0.01, use_fft=True)
+    return dist.pdf(x)
+
+def kde_zfit_fft(data, x):
+    return kde_zfit_fft_internal(data.astype(np.float64), x).numpy()
+
+@tf.function(autograph=False)
+def kde_zfit_ffts_internal(data, x):
+    obs = zfit.Space('x', limits=(np.min(x), np.max(x)))
+    dist = KernelDensityEstimationZfit(obs=obs, data=data, num_grid_points=1024, bandwidth=0.01, use_fft=True, fft_method='signal')
+    return dist.pdf(x)
+
+def kde_zfit_ffts(data, x):
+    return kde_zfit_ffts_internal(data.astype(np.float64), x).numpy()
+
 methods = pd.DataFrame({
     'identifier': [
         'basic',
         'seaborn',
-        'KDEpy',
+        'FFTKDEpy',
         'basicTF',
         'tfp',
         'tfpM',
         'tfpMB',
-        'tfpMFFT'
+        'zfit',
+        'zfitB',
+        'zfitFFT',
+        'zfitFFTs'
     ],
     'label': [
         'Basic KDE with Python',
@@ -89,8 +148,10 @@ methods = pd.DataFrame({
         'KDE implemented as TensorFlow Probability Distribution Subclass',
         'KDE implemented as TensorFlow Probability MixtureSameFamily Subclass',
         'KDE implemented as TensorFlow Probability MixtureSameFamily Subclass with Binned Data',
-        'KDE implemented as TensorFlow Probability MixtureSameFamily Subclass with Fast Fourier Transform'
-
+        'KDE implemented as Zfit wrapped TensorFlow Probability class',
+        'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data',
+        'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT',
+        'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT with tf.signal.fft'
     ],
     'function':[
         kde_basic,
@@ -99,22 +160,39 @@ methods = pd.DataFrame({
         kde_basic_tf,
         kde_tfp,
         kde_tfp_mixture,
-        kde_tfp_mixture_with_binned_data,
-        kde_tfp_mixture_with_fft
+        kde_tfp_mixture_binned,
+        kde_zfit,
+        kde_zfit_binned,
+        kde_zfit_fft,
+        kde_zfit_ffts
     ]
 })
 methods.set_index('identifier', drop=False, inplace=True)
+methods['runtime'] = np.NaN
 
 estimations = pd.DataFrame()
 estimations['x'] = np.linspace(-7.0, 7.0, num=n_testpoints, dtype=np.float32)
 
-methods['runtime'] = np.NaN
 for index, method in methods.iterrows():
-    with Timer('Benchmarking') as timer:
-        estimations[method['identifier']] = method['function'](data, estimations['x'])
-        timer.stop()
-    methods.at[method['identifier'], 'runtime'] = timer.elapsed
+    if method['identifier'] in methods_to_evaluate:
+        with Timer('Benchmarking') as timer:
+            estimations[method['identifier']] = method['function'](data, estimations['x'])
+            timer.stop()
+        methods.at[method['identifier'], 'runtime'] = timer.elapsed
+        if run_twice:
+            with Timer('Benchmarking') as timer:
+                estimations[method['identifier']] = method['function'](data, estimations['x'])
+                timer.stop()
+            methods.at[method['identifier'], 'runtime_second'] = timer.elapsed
+    
+    
 
 methods.drop('function', axis=1, inplace=True)
 
 
+print(methods)
+print(estimations)
+
+import matplotlib.pyplot as plt
+estimations.plot(x = 'x', y = methods_to_evaluate)
+plt.show()

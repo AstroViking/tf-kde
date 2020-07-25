@@ -1,5 +1,6 @@
 tensorflow>=2.2
 tensorflow_probability>=0.9
+tf_quant_finance>=v0.0.1-dev9
 scipy>=1.2
 uproot
 pandas

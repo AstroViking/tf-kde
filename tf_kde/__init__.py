@@ -1,4 +1,4 @@
 from tf_kde import distribution
-from tf_kde import tests
+from tf_kde import benchmark
 
-__all__ = ["distribution", "tests"]
+__all__ = ["distribution", "benchmark"]

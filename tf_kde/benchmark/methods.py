@@ -3,7 +3,7 @@ import numpy as np
 import zfit as zfit
 from KDEpy import NaiveKDE, FFTKDE
 import seaborn as sns
-from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimationBasic, KernelDensityEstimationZfit
+from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimationBasic, KernelDensityEstimationZfit, KernelDensityEstimationZfitFFT
 
 labels = {
     'basic': 'Basic KDE with Python',
@@ -70,7 +70,7 @@ def tfp_internal(data, x, bandwidth):
     dist = KernelDensityEstimationBasic(bandwidth=bandwidth, data=data)
     return dist.prob(x)
 
-def tfp(data, x):
+def tfp(data, x, bandwidth):
     return tfp_internal(data, x, bandwidth).numpy()
 
 @tf.function(autograph=False)
@@ -108,9 +108,18 @@ def zfit_binned(data, x, bandwidth):
     return zfit_binned_internal(data.astype(np.float64), x, bandwidth).numpy()
 
 @tf.function(autograph=False)
+def zfit_simple_binned_internal(data, x, bandwidth):
+    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
+    dist = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth, use_grid=True, binning_method='simple')
+    return dist.pdf(x)  
+
+def zfit_simple_binned(data, x, bandwidth):
+    return zfit_simple_binned_internal(data.astype(np.float64), x, bandwidth).numpy()
+
+@tf.function(autograph=False)
 def zfit_fft_internal(data, x, bandwidth):
     obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
-    dist = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth, use_fft=True)
+    dist = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth)
     return dist.pdf(x)
 
 def zfit_fft(data, x, bandwidth):
@@ -119,7 +128,7 @@ def zfit_fft(data, x, bandwidth):
 @tf.function(autograph=False)
 def zfit_ffts_internal(data, x, bandwidth):
     obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
-    dist = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth, use_fft=True, fft_method='signal')
+    dist = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth, fft_method='signal')
     return dist.pdf(x)
 
 def zfit_ffts(data, x, bandwidth):

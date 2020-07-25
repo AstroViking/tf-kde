@@ -107,6 +107,7 @@ if __name__ == "__main__":
         #'basic',
         'kdepy_fft',
         'zfit_binned',
+        #'zfit_simple_binned',
         'zfit_fft',
         #'zfit_ffts'
     ]
@@ -176,8 +177,8 @@ if __name__ == "__main__":
         j = 0
 
         new_labels = []
-        for method in available_methods:
-            square_error = (distribution_estimations.loc[:, label] - distribution_estimations.loc[:, 'actual'])**2
+        for method in methods_to_evaluate:
+            square_error = (distribution_estimations.loc[:, method] - distribution_estimations.loc[:, 'actual'])**2
             spl = UnivariateSpline(distribution_estimations.index.to_numpy(), square_error)
             integrated_square_error[j] = spl.integral(xlim[0], xlim[1])
 
@@ -185,7 +186,7 @@ if __name__ == "__main__":
 
             j += 1
 
-        print(integrated_square_error)
+        #print(integrated_square_error)
 
         a2[k].legend(handles, new_labels)
     

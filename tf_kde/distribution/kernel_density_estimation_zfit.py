@@ -133,7 +133,7 @@ class KernelDensityEstimation(WrapDistribution):
         def objective_fn(x): 
             return kernel_instance.prob(x) - tf.constant(absolute_tolerance, ztypes.float)
 
-        root = root_search.brentq(
+        roots, value_at_roots, num_iterations, converged = root_search.brentq(
             objective_fn,
             tf.constant(0.0, dtype=ztypes.float),
             tf.constant(8.0, dtype=ztypes.float) * self._bandwidth,
@@ -142,7 +142,7 @@ class KernelDensityEstimation(WrapDistribution):
             function_tolerance=function_tolerance
         )
 
-        return root + absolute_root_tolerance
+        return roots + absolute_root_tolerance
 
     def _generate_grid(self, data, num_grid_points): 
         minimum = tf.math.reduce_min(data)

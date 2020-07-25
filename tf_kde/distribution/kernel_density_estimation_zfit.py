@@ -5,7 +5,6 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
 from tensorflow_probability.python import distributions as tfd
-from tf_quant_finance.math import root_search
 
 from zfit.models.dist_tfp import WrapDistribution
 from zfit import z, ztypes
@@ -13,6 +12,9 @@ from zfit.core.interfaces import ZfitData, ZfitSpace
 from zfit.util import ztyping
 from zfit.util.exception import OverdefinedError, ShapeIncompatibleError
 from zfit.core.space import supports, Space
+
+from tf_kde.helper import binning as binning_helper
+from tf_kde.helper import convolution as convolution_helper
 
 
 class KernelDensityEstimation(WrapDistribution):
@@ -74,24 +76,19 @@ class KernelDensityEstimation(WrapDistribution):
         self._grid = None
         self._grid_data = None
 
-        if support is not None:
-            self._support_bandwidth = tf.convert_to_tensor(self._support, ztypes.float) * self._bandwidth
-        else:
-            self._support_bandwidth = self._find_practical_support_bandwidth(self._bandwidth)
-
         # If FFT is used, we inherit from BasePDF instead of WrapDistribution as there is no TFP Distribution to wrap
         if self._use_fft:
 
-            self._grid = self._generate_grid(self._data, num_grid_points=self._num_grid_points)
-            self._grid_data = self._binning(self._data, self._grid, self._weights)
-            self._grid_fft_data = self._generate_convolved_data(self._grid_data, self._grid)
+            self._grid = binning_helper.generate_grid(self._data, num_grid_points=self._num_grid_points)
+            self._grid_data = binning_helper.bin(self._binning_method, self._data, self._grid, self._weights)
+            self._grid_fft_data = convolution_helper.convolve_data_with_kernel(self._kernel, self._bandwidth, self._grid_data, self._grid)
 
             params = {'bandwidth': self._bandwidth}
             super(WrapDistribution, self).__init__(obs=obs, name=name, params=params)
         else:
             if use_grid:
-                self._grid = self._generate_grid(self._data, num_grid_points=self._num_grid_points)
-                self._grid_data = self._binning(self._data, self._grid, self._weights)
+                self._grid = binning_helper.generate_grid(self._data, num_grid_points=self._num_grid_points)
+                self._grid_data = binning_helper.bin(self._binning_method, self._data, self._grid, self._weights)
 
                 mixture_distribution = tfd.Categorical(probs=self._grid_data)
                 components_distribution = components_distribution_generator(loc=self._grid, scale=self._bandwidth)
@@ -118,137 +115,6 @@ class KernelDensityEstimation(WrapDistribution):
                             dist_kwargs=dist_kwargs,
                             distribution=distribution,
                             name=name)
-    
-    def _find_practical_support_bandwidth(self, bandwidth, absolute_tolerance=10e-5):
-        """
-        Return the support for practical purposes. Used to find a support value
-        for computations for kernel functions without finite (bounded) support.
-        """
-        absolute_root_tolerance = 1e-3
-        relative_root_tolerance = root_search.default_relative_root_tolerance(ztypes.float)
-        function_tolerance = 0
-        
-        kernel_instance = self._kernel(loc=0, scale=self._bandwidth)
-
-        def objective_fn(x): 
-            return kernel_instance.prob(x) - tf.constant(absolute_tolerance, ztypes.float)
-
-        roots, value_at_roots, num_iterations, converged = root_search.brentq(
-            objective_fn,
-            tf.constant(0.0, dtype=ztypes.float),
-            tf.constant(8.0, dtype=ztypes.float) * self._bandwidth,
-            absolute_root_tolerance=absolute_root_tolerance,
-            relative_root_tolerance=relative_root_tolerance,
-            function_tolerance=function_tolerance
-        )
-
-        return roots + absolute_root_tolerance
-
-    def _generate_grid(self, data, num_grid_points): 
-        minimum = tf.math.reduce_min(data)
-        maximum = tf.math.reduce_max(data)
-        return tf.linspace(minimum, maximum, num=num_grid_points)
-
-    def _binning(self, data, grid, weights):
-
-        if self._binning_method == 'simple':
-            return self._simple_binning(data, grid, weights)
-        else:
-            return self._linear_binning(data, grid, weights)
-
-    def _simple_binning(self, data, grid, weights):
-
-        minimum = tf.math.reduce_min(grid)
-        maximum = tf.math.reduce_max(grid)
-        bin_count = tf.size(grid)
-
-        bincount = tf.histogram_fixed_width(data, [minimum, maximum], bin_count)
-
-        #!TODO include weights in calculation
-
-        return bincount
-
-    
-    def _linear_binning(self, data, grid, weights):
-
-        if weights is None:
-            weights = tf.ones_like(data, ztypes.float)            
-
-        weights = weights / tf.reduce_sum(weights)
-
-        grid_size = tf.size(grid)
-        grid_min = tf.math.reduce_min(grid)
-        grid_max = tf.math.reduce_max(grid)
-        num_intervals = tf.math.subtract(grid_size, tf.constant(1))
-        dx = tf.math.divide(tf.math.subtract(grid_max, grid_min), tf.cast(num_intervals, ztypes.float))
-
-        transformed_data = tf.math.divide(tf.math.subtract(data, grid_min), dx)
-
-        # Compute the integral and fractional part of the data
-        # The integral part is used for lookups, the fractional part is used
-        # to weight the data
-        integral = tf.math.floor(transformed_data)
-        fractional = tf.math.subtract(transformed_data, integral)
-        
-        # Compute the weights for left and right side of the linear binning routine
-        frac_weights = tf.math.multiply(fractional, weights)
-        neg_frac_weights = tf.math.subtract(weights, frac_weights)
-
-        #tf.math.bincount only works with tf.int32
-        bincount_left = tf.roll(tf.concat(tf.math.bincount(tf.cast(integral, tf.int32), weights=frac_weights, minlength=grid_size, maxlength=grid_size), tf.constant(0)), shift=1, axis=0)
-        bincount_right = tf.math.bincount(tf.cast(integral, tf.int32), weights=neg_frac_weights, minlength=grid_size, maxlength=grid_size)
-
-        bincount = tf.cast(tf.add(bincount_left, bincount_right), ztypes.float)
-
-        return bincount
-
-    def _generate_convolved_data(self, data, grid):
-
-        kernel_grid_min = tf.math.reduce_min(self._grid)
-        kernel_grid_max = tf.math.reduce_max(self._grid)
-
-        num_grid_points = self._num_grid_points
-        num_intervals = num_grid_points - tf.constant(1, ztypes.int)
-        space_width = kernel_grid_max - kernel_grid_min
-        dx = space_width / tf.cast(num_intervals, ztypes.float)
-            
-        L = tf.cast(num_grid_points, ztypes.float)
-
-        L = tf.minimum(tf.math.floor(self._support_bandwidth / dx),  L)
-
-        # Calculate the kernel weights
-        kernel_grid = tf.linspace(tf.constant(0, ztypes.float), dx * L, tf.cast(L, ztypes.int) + tf.constant(1, ztypes.int))
-        kernel_weights = self._kernel(loc=0, scale=self._bandwidth).prob(kernel_grid)
-        kernel_weights = tf.concat([tf.reverse(kernel_weights, axis = [0])[:-1], kernel_weights], axis=0)
-
-        c = data
-        k = kernel_weights
-
-        if self._fft_method  == 'conv1d':
-            c_size = tf.size(c, ztypes.int)
-            c = tf.reshape(c, [1, c_size, 1], name='c')
-            
-            k_size = tf.size(k, ztypes.int)
-            k = tf.reshape(k, [k_size, 1, 1], name='k')
-
-            return tf.squeeze(tf.nn.conv1d(c, k, 1, 'SAME')) 
-        
-        else:     
-
-            P = tf.math.pow(tf.constant(2, ztypes.int), tf.cast(tf.math.ceil(tf.math.log(tf.constant(3.0, ztypes.float) * tf.cast(num_grid_points, ztypes.float) - tf.constant(1.0, ztypes.float)) / tf.math.log(tf.constant(2.0, ztypes.float))), ztypes.int))
-
-            right_padding = tf.cast(P, ztypes.int) - tf.constant(2, ztypes.int) * num_grid_points - tf.constant(1, ztypes.int)
-            left_padding = num_grid_points - tf.constant(1, ztypes.int)
-
-            c = tf.pad(data, [[left_padding, right_padding]])
-            k = tf.pad(kernel_weights, [[0, right_padding]])
-
-            result = tf.signal.irfft(tf.signal.rfft(c) * tf.signal.rfft(k))
-            start, end = tf.constant(2, ztypes.int) * num_grid_points - tf.constant(1, ztypes.int), tf.constant(3, ztypes.int) * num_grid_points - tf.constant(1, ztypes.int)
-            result = result[start:end]     
-
-            return result
-
 
     def _unnormalized_pdf(self, x, norm_range=False):
 

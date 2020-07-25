@@ -18,6 +18,7 @@ def get_silverman_bandwidth(n, d=1):
 def run_time_benchmark(methods, distributions, n_samples_list, n_runs, n_testpoints, random_seed, additional_run_to_initialize = True, xlim=[-5.0, 5.0]):
 
     runtimes = pd.DataFrame(index=pd.MultiIndex.from_product([distributions, n_samples_list], names=['distribution', 'n_samples']), columns=pd.Index(data=methods, name='method'))
+    runtimes = runtimes.sort_index()
 
     x = np.linspace(xlim[0], xlim[1], num=n_testpoints, dtype=np.float32)
 
@@ -65,7 +66,7 @@ def run_error_benchmark(methods, distributions, n_samples_list, n_testpoints, ra
     y.extend(methods)
 
     estimations = pd.DataFrame(index=pd.MultiIndex.from_product([distributions, n_samples_list, x], names=['distribution', 'n_samples', 'x']), columns=pd.Index(y, name='y'))
-    estimations.sort_index()
+    estimations = estimations.sort_index()
 
     for method in methods:
         if hasattr(available_methods, method):
@@ -135,9 +136,6 @@ if __name__ == "__main__":
     runtimes = run_time_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_runs, n_testpoints, random_seed, True, xlim)
     estimations = run_error_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim)
 
-    print(runtimes)
-    print(estimations)
-
     import matplotlib.pyplot as plt
     import seaborn as sns
     sns.set()
@@ -178,14 +176,16 @@ if __name__ == "__main__":
         j = 0
 
         new_labels = []
-        for label in labels:
+        for method in available_methods:
             square_error = (distribution_estimations.loc[:, label] - distribution_estimations.loc[:, 'actual'])**2
             spl = UnivariateSpline(distribution_estimations.index.to_numpy(), square_error)
             integrated_square_error[j] = spl.integral(xlim[0], xlim[1])
 
-            new_labels.append(label + ' (ISE: ' + '{:3e}'.format(integrated_square_error[j]) + ')')
+            new_labels.append(method + ' (ISE: ' + '{:3e}'.format(integrated_square_error[j]) + ')')
 
             j += 1
+
+        print(integrated_square_error)
 
         a2[k].legend(handles, new_labels)
     

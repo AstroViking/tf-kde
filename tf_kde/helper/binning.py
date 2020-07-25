@@ -16,7 +16,7 @@ def bin(binning_method, data, grid, weights):
 def bin_simple(data, grid, weights):
 
     if weights is None:
-        bincount = tf.histogram_fixed_width(data, [tf.math.reduce_min(grid), tf.math.reduce_max(grid)], tf.size(grid))
+        bincount = tf.cast(tf.histogram_fixed_width(data, [tf.math.reduce_min(grid), tf.math.reduce_max(grid)], tf.size(grid)), ztypes.float)
     else:
         bincount = _bin_weighted(data, grid, weights, 'simple')
 

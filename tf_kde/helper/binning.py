@@ -6,14 +6,14 @@ def generate_grid(data, num_grid_points):
     maximum = tf.math.reduce_max(data)
     return tf.linspace(minimum, maximum, num=num_grid_points)
 
-def bin(binning_method, data, grid, weights):
+def bin(binning_method, data, grid, weights = None):
 
     if binning_method == 'simple':
         return bin_simple(data, grid, weights)
     else:
         return bin_linear(data, grid, weights)
 
-def bin_simple(data, grid, weights):
+def bin_simple(data, grid, weights = None):
 
     if weights is None:
         bincount = tf.cast(tf.histogram_fixed_width(data, [tf.math.reduce_min(grid), tf.math.reduce_max(grid)], tf.size(grid)), ztypes.float)
@@ -22,7 +22,7 @@ def bin_simple(data, grid, weights):
 
     return bincount
 
-def bin_linear(data, grid, weights):
+def bin_linear(data, grid, weights = None):
     return _bin_weighted(data, grid, weights)
 
 def _bin_weighted(data, grid, weights, method='linear'):
@@ -48,7 +48,7 @@ def _bin_weighted(data, grid, weights, method='linear'):
 
     if method == 'simple':
         fractional = tf.cast(fractional > 0.5, fractional.dtype) * fractional
-    
+
     # Compute the weights for left and right side of the linear binning routine
     frac_weights = tf.math.multiply(fractional, weights)
     neg_frac_weights = tf.math.subtract(weights, frac_weights)

@@ -89,7 +89,6 @@ def run_error_benchmark(methods, distributions, n_samples_list, n_testpoints, ra
                         y_estimate = method_to_call(data, x, bandwidth)
  
                         estimations.loc[(distribution, n_samples), method] = y_estimate
-                        #estimations.loc[(distribution, n_samples), method + '_error'] = y_actual - y_estimate
 
                 else:
                     raise NameError('Distribution \'%s\' is not defined!')
@@ -115,8 +114,9 @@ if __name__ == "__main__":
         'gaussian',
         'uniform',
         'skewed_bimodal',
+        'mix_3gauss_1exp_1uni',
         'claw',
-        'mix_3gauss_1exp_1uni'
+        'asymmetric_double_claw'
     ]
 
     n_samples_list = [

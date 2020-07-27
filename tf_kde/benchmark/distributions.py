@@ -3,10 +3,6 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 import tensorflow_probability.python.distributions as tfd
 
-r_seed = 1978239485
-n_datapoints = 1000000
-tfd = tfp.distributions
-
 gaussian = tfd.Normal(loc=0., scale=1.)
 
 uniform = tfd.Uniform(low=-2., high=2.)

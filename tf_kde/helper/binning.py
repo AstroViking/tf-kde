@@ -1,10 +1,15 @@
 import tensorflow as tf
 from zfit import ztypes
 
-def generate_grid(data, num_grid_points): 
+def generate_grid(data, num_grid_points, absolute_boundary=0.0, relative_boundary=0.05): 
+
     minimum = tf.math.reduce_min(data)
     maximum = tf.math.reduce_max(data)
-    return tf.linspace(minimum, maximum, num=num_grid_points)
+    space_width = maximum - minimum
+
+    outside_borders = tf.maximum(relative_boundary * space_width, absolute_boundary)
+
+    return tf.linspace(minimum - outside_borders, maximum + outside_borders, num=num_grid_points)
 
 def bin(binning_method, data, grid, weights = None):
 

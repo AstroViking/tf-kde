@@ -113,7 +113,7 @@ if __name__ == "__main__":
     distributions_to_evaluate = [
         'gaussian',
         'uniform',
-        'skewed_bimodal',
+        'bimodal',
         'mix_3gauss_1exp_1uni',
         'claw',
         'asymmetric_double_claw'
@@ -168,15 +168,13 @@ if __name__ == "__main__":
         distribution_estimations.astype(np.float64).plot(kind='line', y=methods_to_show, ax=a2[k])
         a2[k].set_title(distribution)
 
-        k += 1
-
         handles, labels = a2[k].get_legend_handles_labels()
 
         integrated_square_error = np.zeros(n_methods)
 
         j = 0
 
-        new_labels = []
+        new_labels = ['actual']
         for method in methods_to_evaluate:
             square_error = (distribution_estimations.loc[:, method] - distribution_estimations.loc[:, 'actual'])**2
             spl = UnivariateSpline(distribution_estimations.index.to_numpy(), square_error)
@@ -186,9 +184,11 @@ if __name__ == "__main__":
 
             j += 1
 
-        #print(integrated_square_error)
+        print(integrated_square_error)
 
-        a2[k].legend(handles, new_labels)
+        #a2[k].legend(handles, new_labels)
+
+        k += 1
     
     plt.show()
 

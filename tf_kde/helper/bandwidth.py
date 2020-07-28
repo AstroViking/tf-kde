@@ -122,7 +122,6 @@ def _find_root(function, N, squared_integers, grid_data_dct2):
     return t_star
 
 
-@tf.function(autograph=False)
 def improved_sheather_jones(data):
     
     n = 2 ** 10

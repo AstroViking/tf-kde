@@ -2,7 +2,8 @@ from tf_kde.distribution.kernel_density_estimation import KernelDensityEstimatio
 from tf_kde.distribution.kernel_density_estimation_basic import KernelDensityEstimationBasic
 from tf_kde.distribution.kernel_density_estimation_zfit import KernelDensityEstimation as KernelDensityEstimationZfit
 from tf_kde.distribution.kernel_density_estimation_zfit import KernelDensityEstimationFFT as KernelDensityEstimationZfitFFT
+from tf_kde.distribution.kernel_density_estimation_zfit import KernelDensityEstimationISJ as KernelDensityEstimationZfitISJ
 
 
 
-__all__ = ["KernelDensityEstimation", "KernelDensityEstimationBasic", "KernelDensityEstimationZfit", "KernelDensityEstimationZfitFFT"]
+__all__ = ["KernelDensityEstimation", "KernelDensityEstimationBasic", "KernelDensityEstimationZfit", "KernelDensityEstimationZfitISJ"]

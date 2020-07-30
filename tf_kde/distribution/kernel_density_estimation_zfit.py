@@ -15,6 +15,8 @@ from zfit.core.space import supports, Space
 
 from tf_kde.helper import binning as binning_helper
 from tf_kde.helper import convolution as convolution_helper
+from tf_kde.helper import bandwidth as bandwidth_helper
+from tf_kde.helper import improved_sheather_jones as isj_helper
 
 
 class KernelDensityEstimation(WrapDistribution):
@@ -201,3 +203,66 @@ class KernelDensityEstimationFFT(BasePDF):
     #        return super()._analytic_sample(n, limits)
         #lower, upper = limits._rect_limits_tf
         #return tfd_analytic_sample(n=n, dist=self.distribution, limits=limits)
+
+class KernelDensityEstimationISJ(BasePDF):
+    _N_OBS = 1
+
+    def __init__(self, 
+                 obs: ztyping.ObsTypeInput, 
+                 data: ztyping.ParamTypeInput,
+                 num_grid_points = 1024,
+                 binning_method = 'linear',
+                 weights: Union[None, np.ndarray, tf.Tensor] = None,
+                 name: str = "KernelDensityEstimationISJ"):
+        r"""
+        Kernel Density Estimation is a non-parametric method to approximate the density of given points.
+        .. math::
+            f_h(x) =  \frac{1}{nh} \sum_{i=1}^n K\Big(\frac{x-x_i}{h}\Big)
+
+        It is computed by using a trick described in a paper by Botev et al. that uses the fact, that the Kernel Density Estimation
+        with a Gaussian Kernel is a solution to the Heat Euqation.
+
+        Args:
+            data: 1-D Tensor-like.
+            bandwidth: Bandwidth of the kernel. Valid options are {'silverman', 'scott', 'adaptiveV1'} or a numerical.
+                If a numerical is given, it as to be broadcastable to the batch and event shape of the distribution.
+                A scalar or a `zfit.Parameter` will simply broadcast to `data` for a 1-D distribution.
+            obs: Observables
+            weights: Weights of each `data`, can be None or Tensor-like with shape compatible with `data`
+            name: Name of the PDF
+        """
+
+        if isinstance(data, ZfitData):
+            if data.weights is not None:
+                if weights is not None:
+                    raise OverdefinedError("Cannot specify weights and use a `ZfitData` with weights.")
+                else:
+                    weights = data.weights
+
+            if data.n_obs > 1:
+                raise ShapeIncompatibleError(f"KDE is 1 dimensional, but data {data} has {data.n_obs} observables.")
+            data = z.unstack_x(data)
+
+        shape_data = tf.shape(data)
+        size = tf.cast(shape_data[0], ztypes.float)
+
+        self._num_grid_points = num_grid_points
+        self._binning_method = binning_method
+        self._data = tf.convert_to_tensor(data, ztypes.float)
+        self._weights = weights
+        self._grid = None
+        self._grid_data = None
+
+        self._bandwidth, self._grid_data, self._grid = isj_helper.calculate_bandwidth_and_density(self._data, self._num_grid_points, self._binning_method, self._weights)
+
+        params = {'num_grid_points': self._num_grid_points}
+        super().__init__(obs=obs, name=name, params=params)
+
+    def _unnormalized_pdf(self, x, norm_range=False):
+
+        x = z.unstack_x(x)
+        x_min = tf.reduce_min(self._grid)
+        x_max = tf.reduce_max(self._grid)
+
+        return tfp.math.interp_regular_1d_grid(x, x_min, x_max, self._grid_data)
+

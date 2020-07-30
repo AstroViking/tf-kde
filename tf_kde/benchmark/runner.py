@@ -4,6 +4,7 @@ import zfit as zfit
 from KDEpy import NaiveKDE, FFTKDE
 from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimationBasic, KernelDensityEstimationZfit
 from zfit_benchmark.timer import Timer
+import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 from decimal import Decimal
@@ -11,6 +12,8 @@ from scipy.interpolate import UnivariateSpline
 
 from tf_kde.benchmark import distributions as available_distributions
 from tf_kde.benchmark import methods as available_methods
+
+sns.set()
 
 def get_silverman_bandwidth(n, d=1): 
     return (n * (d + 2) / 4.)**(-1. / (d + 4))
@@ -97,6 +100,74 @@ def run_error_benchmark(methods, distributions, n_samples_list, n_testpoints, ra
 
     return estimations
 
+
+def calculate_integrated_square_errors(estimation, methods):
+
+    integrated_square_errors = {}
+
+    for method in methods:
+        square_error = (estimation.loc[:, method] - estimation.loc[:, 'actual'])**2
+        spline = UnivariateSpline(estimation.index.to_numpy(), square_error)
+        integrated_square_errors[method] = spline.integral(xlim[0], xlim[1])
+    
+    return integrated_square_errors
+
+
+def generate_subplots(n_distributions, n_columns = 2):
+
+    n_rows = int(np.ceil(n_distributions / n_columns))
+
+    figure, axes = plt.subplots(n_rows, n_columns)
+    axes = axes.flatten()
+
+    return figure, axes
+
+
+def plot_runtime(runtimes, distribution, methods, axes):
+    runtime = runtimes.xs(distribution)
+    runtime.astype(np.float64).plot(kind='line', y=methods, ax=axes, logy=True,logx=True, title=distribution)
+
+
+def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes):
+
+    methods_to_show = ['actual']
+    methods_to_show.extend(methods)
+
+    estimation = estimations.xs((distribution, n_samples_to_show))
+    estimation.astype(np.float64).plot(kind='line', y=methods_to_show, ax=axes, title=distribution)
+
+    integrated_square_errors = calculate_integrated_square_errors(estimation, methods)
+    handles, labels = axes.get_legend_handles_labels()
+
+    for key, label in enumerate(labels):
+        if label != 'actual':
+            labels[key] = label + ' (ISE: ' + "{:3e}".format(integrated_square_errors[label]) + ')'
+
+    axes.legend(handles, labels)
+
+
+def plot_runtimes(runtimes, distributions, methods):
+    figure, axes = generate_subplots(len(distributions_to_evaluate))
+
+    k = 0
+    for distribution in distributions:
+        plot_runtime(runtimes, distribution, methods, axes[k])
+        k += 1
+
+    return figure, axes
+
+
+def plot_estimations(estimations, distributions, n_samples_to_show, methods):
+    figure, axes = generate_subplots(len(distributions_to_evaluate))
+
+    k = 0
+    for distribution in distributions:
+        plot_estimation(estimations, distribution, methods, n_samples_to_show, axes[k])
+        k += 1
+
+    return figure, axes
+
+
 if __name__ == "__main__":
 
     random_seed = 756454
@@ -136,60 +207,11 @@ if __name__ == "__main__":
 
     runtimes = run_time_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_runs, n_testpoints, random_seed, True, xlim)
     estimations = run_error_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim)
-
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    sns.set()
         
     n_samples_to_show = 1e7
-    n_methods = len(methods_to_evaluate)
-    n_distributions = len(distributions_to_evaluate)
 
-    n_columns = 2
-    n_rows = int(np.ceil(n_distributions / n_columns))
-
-    f1, a1 = plt.subplots(n_rows, n_columns)
-    f2, a2 = plt.subplots(n_rows, n_columns)
-
-    a1 = a1.flatten()
-    a2 = a2.flatten()
-
-    methods_to_show = ['actual']
-    methods_to_show.extend(methods_to_evaluate)
-
-    k = 0
-    for distribution in distributions_to_evaluate:
-
-        distribution_runtimes = runtimes.xs(distribution)
-        distribution_runtimes.astype(np.float64).plot(kind='line', y=methods_to_evaluate, ax=a1[k], logy=True,logx=True)
-        a1[k].set_title(distribution)
-
-        distribution_estimations = estimations.xs((distribution, n_samples_to_show))
-        distribution_estimations.astype(np.float64).plot(kind='line', y=methods_to_show, ax=a2[k])
-        a2[k].set_title(distribution)
-
-        handles, labels = a2[k].get_legend_handles_labels()
-
-        integrated_square_error = np.zeros(n_methods)
-
-        j = 0
-
-        new_labels = ['actual']
-        for method in methods_to_evaluate:
-            square_error = (distribution_estimations.loc[:, method] - distribution_estimations.loc[:, 'actual'])**2
-            spl = UnivariateSpline(distribution_estimations.index.to_numpy(), square_error)
-            integrated_square_error[j] = spl.integral(xlim[0], xlim[1])
-
-            new_labels.append(method + ' (ISE: ' + '{:3e}'.format(integrated_square_error[j]) + ')')
-
-            j += 1
-
-        print(integrated_square_error)
-
-        #a2[k].legend(handles, new_labels)
-
-        k += 1
-    
+    plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate)
+    plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
     plt.show()
 
 

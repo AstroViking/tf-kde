@@ -5,15 +5,15 @@ import tensorflow_probability.python.distributions as tfd
 
 gaussian = tfd.Normal(loc=0., scale=1.)
 
-uniform = tfd.Uniform(low=-2., high=2.)
+uniform = tfd.Uniform(low=-5., high=5.)
 
 bimodal = tfd.Mixture(
 
   cat=tfd.Categorical(probs=[1/2, 1/2]),
 
   components=[
-    tfd.Normal(loc=-5, scale=1.),
-    tfd.Normal(loc=5, scale=1.)
+    tfd.Normal(loc=-2, scale=0.5),
+    tfd.Normal(loc=2, scale=0.5)
 ])
 
 skewed_bimodal = tfd.Mixture(

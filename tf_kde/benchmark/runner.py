@@ -15,7 +15,7 @@ from tf_kde.benchmark import methods as available_methods
 def get_silverman_bandwidth(n, d=1): 
     return (n * (d + 2) / 4.)**(-1. / (d + 4))
 
-def run_time_benchmark(methods, distributions, n_samples_list, n_runs, n_testpoints, random_seed, additional_run_to_initialize = True, xlim=[-5.0, 5.0]):
+def run_time_benchmark(methods, distributions, n_samples_list, n_runs, n_testpoints, random_seed, additional_run_to_initialize = True, xlim=[-10.0, 10.0]):
 
     runtimes = pd.DataFrame(index=pd.MultiIndex.from_product([distributions, n_samples_list], names=['distribution', 'n_samples']), columns=pd.Index(data=methods, name='method'))
     runtimes = runtimes.sort_index()
@@ -58,7 +58,7 @@ def run_time_benchmark(methods, distributions, n_samples_list, n_runs, n_testpoi
     return runtimes
 
 
-def run_error_benchmark(methods, distributions, n_samples_list, n_testpoints, random_seed, xlim=[-5.0, 5.0]):
+def run_error_benchmark(methods, distributions, n_samples_list, n_testpoints, random_seed, xlim=[-10.0, 10.0]):
 
     x = np.linspace(xlim[0], xlim[1], num=n_testpoints, dtype=np.float32)
 
@@ -130,8 +130,8 @@ if __name__ == "__main__":
     ]
 
     xlim = [
-        -7,
-        7
+        -10,
+        10
     ]
 
     runtimes = run_time_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_runs, n_testpoints, random_seed, True, xlim)

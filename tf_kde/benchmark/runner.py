@@ -54,9 +54,9 @@ def run_time_benchmark(methods, distributions, n_samples_list, n_runs, n_testpoi
                         runtimes.at[(distribution, n_samples), method] = time / n_runs
 
                 else:
-                    raise NameError('Distribution \'%s\' is not defined!')
+                    raise NameError(f'Distribution \'{distribution}\' is not defined!')
         else:
-            raise NameError('Method \'%s\' is not defined!')
+            raise NameError(f'Method \'{method}\' is not defined!')
 
     return runtimes
 
@@ -94,9 +94,9 @@ def run_error_benchmark(methods, distributions, n_samples_list, n_testpoints, ra
                         estimations.loc[(distribution, n_samples), method] = y_estimate
 
                 else:
-                    raise NameError('Distribution \'%s\' is not defined!')
+                    raise NameError(f'Distribution \'{distribution}\' is not defined!')
         else:
-            raise NameError('Method \'%s\' is not defined!')
+            raise NameError(f'Method \'{method}\' is not defined!')
 
     return estimations
 
@@ -141,7 +141,7 @@ def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes)
 
     for key, label in enumerate(labels):
         if label != 'actual':
-            labels[key] = label + ' (ISE: ' + "{:3e}".format(integrated_square_errors[label]) + ')'
+            labels[key] = label + f' (ISE: {integrated_square_errors[label]:.3e})'
 
     axes.legend(handles, labels)
 
@@ -179,7 +179,9 @@ if __name__ == "__main__":
         'zfit_binned',
         #'zfit_simple_binned',
         'zfit_fft',
-        #'zfit_ffts'
+        #'zfit_ffts',
+        'zfit_fft_with_isj_bandwidth',
+        'zfit_isj'
     ]
     distributions_to_evaluate = [
         'gaussian',

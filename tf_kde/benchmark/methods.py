@@ -3,7 +3,9 @@ import numpy as np
 import zfit as zfit
 from KDEpy import NaiveKDE, FFTKDE
 import seaborn as sns
-from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimationBasic, KernelDensityEstimationZfit, KernelDensityEstimationZfitFFT
+from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimationBasic, KernelDensityEstimationZfit, KernelDensityEstimationZfitFFT, KernelDensityEstimationZfitISJ 
+from tf_kde.helper import bandwidth as bw_helper
+
 
 labels = {
     'basic': 'Basic KDE with Python',
@@ -14,9 +16,12 @@ labels = {
     'tfp_mixture': 'KDE implemented as TensorFlow Probability MixtureSameFamily Subclass',
     'tfp_mixture_binned': 'KDE implemented as TensorFlow Probability MixtureSameFamily Subclass with Binned Data',
     'zfit_mixture': 'KDE implemented as Zfit wrapped TensorFlow Probability class',
-    'zfit_binned': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data',
+    'zfit_binned': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Linear Binned Data',
+    'zfit_simple_binned': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Simple Binned Data',
     'zfit_fft': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT',
-    'zfit_ffts': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT with tf.signal.fft'
+    'zfit_ffts': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT with tf.signal.fft',
+    'zfit_fft_with_isj_bandwidth': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT and Bandwith computed with ISJ',
+    'zfit_isj': 'KDE implemented as Zfit wrapped ISJ method',
 }
 
 def basic(data, x, bandwidth):
@@ -133,3 +138,23 @@ def zfit_ffts_internal(data, x, bandwidth):
 
 def zfit_ffts(data, x, bandwidth):
     return zfit_ffts_internal(data.astype(np.float64), x, bandwidth).numpy()
+
+@tf.function(autograph=False)
+def zfit_fft_with_isj_bandwidth_internal(data, x, bandwidth):
+    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
+
+    bandwidth = bw_helper.improved_sheather_jones(data)
+    dist = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth)
+    return dist.pdf(x)
+
+def zfit_fft_with_isj_bandwidth(data, x, bandwidth):
+    return zfit_fft_internal(data.astype(np.float64), x, bandwidth).numpy()
+
+@tf.function(autograph=False)
+def zfit_isj_internal(data, x, bandwidth):
+    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
+    dist = KernelDensityEstimationZfitISJ(obs=obs, data=data)
+    return dist.pdf(x)
+
+def zfit_isj(data, x, bandwidth):
+    return zfit_isj_internal(data.astype(np.float64), x, bandwidth).numpy()

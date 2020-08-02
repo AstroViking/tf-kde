@@ -233,7 +233,3 @@ if __name__ == "__main__":
     plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate)
     plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
     plt.show()
-
-
-
-

@@ -166,7 +166,7 @@ def plot_distributions(distributions, xlim, n_columns):
 
 
 def plot_runtimes(runtimes, distributions, methods):
-    figure, axes = generate_subplots(len(distributions_to_evaluate))
+    figure, axes = generate_subplots(len(distributions))
 
     k = 0
     for distribution in distributions:
@@ -177,7 +177,7 @@ def plot_runtimes(runtimes, distributions, methods):
 
 
 def plot_estimations(estimations, distributions, n_samples_to_show, methods):
-    figure, axes = generate_subplots(len(distributions_to_evaluate))
+    figure, axes = generate_subplots(len(distributions))
 
     k = 0
     for distribution in distributions:
@@ -191,7 +191,7 @@ if __name__ == "__main__":
 
     random_seed = 756454
     n_testpoints = 1024
-    n_runs = 10
+    n_runs = 3
     methods_to_evaluate = [
         #'basic',
         'kdepy_fft',
@@ -202,13 +202,13 @@ if __name__ == "__main__":
         #'zfit_ffts',
         'zfit_fft_with_isj_bandwidth',
         'zfit_isj',
-        'zfit_adaptive'
+        #'zfit_adaptive'
     ]
     distributions_to_evaluate = [
         'gaussian',
         'uniform',
         'bimodal',
-        'mix_3gauss_1exp_1uni',
+        'skewed_bimodal',
         'claw',
         'asymmetric_double_claw'
     ]

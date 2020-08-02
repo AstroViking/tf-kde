@@ -3,6 +3,7 @@ import numpy as np
 import zfit as zfit
 from KDEpy import NaiveKDE, FFTKDE
 import seaborn as sns
+from zfit.pdf import GaussianKDE1DimV1
 from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimationBasic, KernelDensityEstimationZfit, KernelDensityEstimationZfitFFT, KernelDensityEstimationZfitISJ 
 from tf_kde.helper import bandwidth as bw_helper
 
@@ -10,7 +11,9 @@ from tf_kde.helper import bandwidth as bw_helper
 labels = {
     'basic': 'Basic KDE with Python',
     'seaborn': 'KDE using seaborn.distplot',
+    'kdepy': 'KDE using KDEpy.NaiveKDE',
     'kdepy_fft': 'KDE using KDEpy.FFTKDE',
+    'kdepy_fft_isj': 'KDE using KDEpy.FFTKDE and ISJ bandwidth',
     'tf_basic': 'Basic KDE in TensorFlow',
     'tfp': 'KDE implemented as TensorFlow Probability Distribution Subclass',
     'tfp_mixture': 'KDE implemented as TensorFlow Probability MixtureSameFamily Subclass',
@@ -22,6 +25,7 @@ labels = {
     'zfit_ffts': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT with tf.signal.fft',
     'zfit_fft_with_isj_bandwidth': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT and Bandwith computed with ISJ',
     'zfit_isj': 'KDE implemented as Zfit wrapped ISJ method',
+    'zfit_adaptive': 'KDE implemented as Zfit wrapped ISJ method',
 }
 
 def basic(data, x, bandwidth):
@@ -52,6 +56,10 @@ def kdepy(data, x, bandwidth):
 def kdepy_fft(data, x, bandwidth):
     x = np.array(x)
     return FFTKDE(kernel="gaussian", bw=bandwidth).fit(data).evaluate(x)
+
+def kdepy_fft_isj(data, x, bandwidth):
+    x = np.array(x)
+    return FFTKDE(kernel="gaussian", bw='ISJ').fit(data).evaluate(x)
 
 @tf.function(autograph=False)
 def tf_basic_internal(data, x, n_datapoints, bandwidth):
@@ -158,3 +166,12 @@ def zfit_isj_internal(data, x, bandwidth):
 
 def zfit_isj(data, x, bandwidth):
     return zfit_isj_internal(data.astype(np.float64), x, bandwidth).numpy()
+
+@tf.function(autograph=False)
+def zfit_adaptive_internal(data, x, bandwidth):
+    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
+    dist = GaussianKDE1DimV1(obs=obs, bandwidth='adaptive', data=data)
+    return dist.pdf(x)
+
+def zfit_adaptive(data, x, bandwidth):
+    return zfit_adaptive_internal(data.astype(np.float64), x, bandwidth).numpy()

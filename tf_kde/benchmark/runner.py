@@ -14,6 +14,7 @@ from tf_kde.benchmark import distributions as available_distributions
 from tf_kde.benchmark import methods as available_methods
 
 sns.set()
+plt.rc('legend',fontsize=6)
 
 def get_silverman_bandwidth(n, d=1): 
     return (n * (d + 2) / 4.)**(-1. / (d + 4))
@@ -146,6 +147,21 @@ def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes)
     axes.legend(handles, labels)
 
 
+def plot_distributions(distributions, xlim, n_columns):
+    x = np.linspace(xlim[0], xlim[1], num=1000, dtype=np.float64)
+
+    subplots = generate_subplots(len(distributions), n_columns)
+
+    k = 0
+    for distribution in distributions:
+        distribution_object = getattr(available_distributions, distribution)
+        y = distribution_object.prob(x).numpy()
+        subplots[k].plot(x, y)
+        k +=1
+
+    distribution_object.prob(x).numpy()
+
+
 def plot_runtimes(runtimes, distributions, methods):
     figure, axes = generate_subplots(len(distributions_to_evaluate))
 
@@ -172,16 +188,18 @@ if __name__ == "__main__":
 
     random_seed = 756454
     n_testpoints = 1024
-    n_runs = 3
+    n_runs = 10
     methods_to_evaluate = [
         #'basic',
         'kdepy_fft',
+        #'kdepy_fft_isj',
         'zfit_binned',
         #'zfit_simple_binned',
         'zfit_fft',
         #'zfit_ffts',
         'zfit_fft_with_isj_bandwidth',
-        'zfit_isj'
+        'zfit_isj',
+        'zfit_adaptive'
     ]
     distributions_to_evaluate = [
         'gaussian',

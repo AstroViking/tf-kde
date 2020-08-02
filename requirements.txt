@@ -1,5 +1,5 @@
 zfit>=0.5.4
-zfit_benchmark@git+git://github.com/zfit/benchmark.git#egg=zfit_benchmark
+zfit_benchmark@git+git://github.com/zfit/benchmarks.git#egg=zfit_benchmark
 tensorflow>=2.2
 tensorflow_probability>=0.9
 tf_quant_finance>=v0.0.1-dev9

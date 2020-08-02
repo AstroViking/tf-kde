@@ -150,16 +150,18 @@ def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes)
 def plot_distributions(distributions, xlim, n_columns):
     x = np.linspace(xlim[0], xlim[1], num=1000, dtype=np.float64)
 
-    subplots = generate_subplots(len(distributions), n_columns)
+    figure, axes = generate_subplots(len(distributions), n_columns)
 
     k = 0
     for distribution in distributions:
         distribution_object = getattr(available_distributions, distribution)
         y = distribution_object.prob(x).numpy()
-        subplots[k].plot(x, y)
+        axes[k].plot(x, y)
         k +=1
 
     distribution_object.prob(x).numpy()
+
+    return figure, axes
 
 
 def plot_runtimes(runtimes, distributions, methods):

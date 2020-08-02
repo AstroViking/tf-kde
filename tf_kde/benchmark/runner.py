@@ -157,6 +157,7 @@ def plot_distributions(distributions, xlim, n_columns):
         distribution_object = getattr(available_distributions, distribution)
         y = distribution_object.prob(x).numpy()
         axes[k].plot(x, y)
+        axes[k].set_title(distribution)
         k +=1
 
     distribution_object.prob(x).numpy()

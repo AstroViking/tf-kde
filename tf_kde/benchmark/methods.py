@@ -167,7 +167,6 @@ def zfit_isj_internal(data, x, bandwidth):
 def zfit_isj(data, x, bandwidth):
     return zfit_isj_internal(data.astype(np.float64), x, bandwidth).numpy()
 
-@tf.function(autograph=False)
 def zfit_adaptive_internal(data, x, bandwidth):
     obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
     dist = GaussianKDE1DimV1(obs=obs, bandwidth='adaptive', data=data)

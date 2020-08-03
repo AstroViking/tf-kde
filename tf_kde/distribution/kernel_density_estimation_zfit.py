@@ -226,7 +226,7 @@ class KernelDensityEstimationISJ(BasePDF):
 
         self._bandwidth, self._grid_data, self._grid = isj_helper.calculate_bandwidth_and_density(self._data, self._num_grid_points, self._binning_method, self._weights)
 
-        params = {'num_grid_points': self._num_grid_points}
+        params = {}
         super().__init__(obs=obs, name=name, params=params)
 
     def _unnormalized_pdf(self, x, norm_range=False):

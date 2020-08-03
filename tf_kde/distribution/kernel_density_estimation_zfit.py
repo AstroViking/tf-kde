@@ -177,32 +177,6 @@ class KernelDensityEstimationFFT(BasePDF):
 
         return tfp.math.interp_regular_1d_grid(x, x_min, x_max, self._grid_convolved_data)
 
-    @supports()
-    def _analytic_integrate(self, limits, norm_range):
-        return tf.constant(1.0, ztypes.float)
-
-    # TODO: register integral?
-    #@supports()
-    #def _analytic_integrate(self, limits, norm_range):
-
-     #   if self._use_fft:
-     #       return tf.constant(1.0, ztypes.float)
-     #   else:
-            # Why does this not work?
-            #return super()._analytic_integrate(limits, None)
-    #        lower, upper = limits._rect_limits_tf
-    #        lower = z.unstack_x(lower)
-    #        upper = z.unstack_x(upper)
-    #        tf.debugging.assert_all_finite((lower, upper), "Are infinite limits needed? Causes troubles with NaNs")
-    #        return self.distribution.cdf(upper) - self.distribution.cdf(lower)
-
-    #def _analytic_sample(self, n, limits):
-    #    if self._use_fft:
-    #       return super(WrapDistribution, self)._analytic_sample(n, limits)
-    #    else:
-    #        return super()._analytic_sample(n, limits)
-        #lower, upper = limits._rect_limits_tf
-        #return tfd_analytic_sample(n=n, dist=self.distribution, limits=limits)
 
 class KernelDensityEstimationISJ(BasePDF):
     _N_OBS = 1

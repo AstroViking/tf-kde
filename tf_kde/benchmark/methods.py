@@ -8,101 +8,120 @@ from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimation
 from tf_kde.helper import bandwidth as bw_helper
 
 
-labels = {
-    'kdepy': 'KDE using KDEpy.NaiveKDE',
-    'kdepy_fft': 'KDE using KDEpy.FFTKDE',
-    'kdepy_fft_isj': 'KDE using KDEpy.FFTKDE and ISJ bandwidth',
-    'zfit_mixture': 'KDE implemented as Zfit wrapped TensorFlow Probability class',
-    'zfit_binned': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Linear Binned Data',
-    'zfit_simple_binned': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Simple Binned Data',
-    'zfit_fft': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT',
-    'zfit_ffts': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT with tf.signal.fft',
-    'zfit_fft_with_isj_bandwidth': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT and Bandwith computed with ISJ',
-    'zfit_isj': 'KDE implemented as Zfit wrapped ISJ method',
-    'zfit_adaptive': 'KDE implemented as Zfit wrapped MixtureSameFamily with adaptive Bandwith calculation',
-}
+class KDEpy: 
+    description = 'KDE using KDEpy.NaiveKDE'
+    
+    def __init__(self, data, bandwidth, xlim = None):
+        self._instance = NaiveKDE(kernel="gaussian", bw=bandwidth).fit(data).evaluate(x)
+    
+    def pdf(self, x):
+        x = np.array(x)
+        return self._instance.evaluate(x)
 
-def kdepy(data, x, bandwidth):
-    x = np.array(x)
-    return NaiveKDE(kernel="gaussian", bw=bandwidth).fit(data).evaluate(x)
 
-def kdepy_fft(data, x, bandwidth):
-    x = np.array(x)
-    return FFTKDE(kernel="gaussian", bw=bandwidth).fit(data).evaluate(x)
+class KDEpyFFT:
+    description = 'KDE using KDEpy.FFTKDE'
 
-def kdepy_fft_isj(data, x, bandwidth):
-    x = np.array(x)
-    return FFTKDE(kernel="gaussian", bw='ISJ').fit(data).evaluate(x)
+    def __init__(self, data, bandwidth, xlim = None):
+        self._instance = FFTKDE(kernel="gaussian", bw=bandwidth).fit(data).evaluate(x)
+    
+    def pdf(self, x):
+        x = np.array(x)
+        return self._instance.evaluate(x)
 
-@tf.function(autograph=False)
-def zfit_mixture_internal(data, x, bandwidth):
-    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
-    dist = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth)
-    return dist.pdf(x)
 
-def zfit_mixture(data, x, bandwidth):
-    return zfit_mixture_internal(data.astype(np.float64), x, bandwidth).numpy()
+class KDEpyFFTwithISJBandwidth:
+    description = 'KDE using KDEpy.FFTKDE and ISJ bandwidth'
 
-@tf.function(autograph=False)
-def zfit_binned_internal(data, x, bandwidth):
-    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
-    dist = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth, use_grid=True)
-    return dist.pdf(x)  
+    def __init__(self, data, bandwidth, xlim = None):
+        self._instance = FFTKDE(kernel="gaussian", bw='ISJ').fit(data).evaluate(x)
+    
+    def pdf(self, x):
+        x = np.array(x)
+        return self._instance.evaluate(x)
 
-def zfit_binned(data, x, bandwidth):
-    return zfit_binned_internal(data.astype(np.float64), x, bandwidth).numpy()
 
-@tf.function(autograph=False)
-def zfit_simple_binned_internal(data, x, bandwidth):
-    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
-    dist = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth, use_grid=True, binning_method='simple')
-    return dist.pdf(x)  
+class ZfitExact:
+    description = 'KDE implemented as Zfit wrapped MixtureSameFamily'
 
-def zfit_simple_binned(data, x, bandwidth):
-    return zfit_simple_binned_internal(data.astype(np.float64), x, bandwidth).numpy()
+    def __init__(self, data, bandwidth, xlim):
+        obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
+        self._instance = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth)
 
-@tf.function(autograph=False)
-def zfit_fft_internal(data, x, bandwidth):
-    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
-    dist = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth)
-    return dist.pdf(x)
+    @tf.function(autograph=False)
+    def pdf(self, x):
+        return self._instance.pdf(x)
 
-def zfit_fft(data, x, bandwidth):
-    return zfit_fft_internal(data.astype(np.float64), x, bandwidth).numpy()
 
-@tf.function(autograph=False)
-def zfit_ffts_internal(data, x, bandwidth):
-    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
-    dist = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth, fft_method='signal')
-    return dist.pdf(x)
+class ZfitBinned:
+    description = 'KDE implemented as Zfit wrapped MixtureSameFamily with linearly binned Data'
 
-def zfit_ffts(data, x, bandwidth):
-    return zfit_ffts_internal(data.astype(np.float64), x, bandwidth).numpy()
+    def __init__(self, data, bandwidth, xlim):
+        obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
+        self._instance = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth, use_grid=True)
 
-@tf.function(autograph=False)
-def zfit_fft_with_isj_bandwidth_internal(data, x, bandwidth):
-    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
+    @tf.function(autograph=False)
+    def pdf(self, x):
+        return self._instance.pdf(x)
 
-    bandwidth = bw_helper.improved_sheather_jones(data)
-    dist = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth)
-    return dist.pdf(x)
 
-def zfit_fft_with_isj_bandwidth(data, x, bandwidth):
-    return zfit_fft_internal(data.astype(np.float64), x, bandwidth).numpy()
+class ZfitSimpleBinned:
+    description = 'KDE implemented as Zfit wrapped MixtureSameFamily with simple binned Data'
 
-@tf.function(autograph=False)
-def zfit_isj_internal(data, x, bandwidth):
-    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
-    dist = KernelDensityEstimationZfitISJ(obs=obs, data=data)
-    return dist.pdf(x)
+    def __init__(self, data, bandwidth, xlim):
+        obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
+        self._instance = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth, use_grid=True, binning_method='simple')
+ 
+    @tf.function(autograph=False)
+    def pdf(self, x):
+        return self._instance.pdf(x)
 
-def zfit_isj(data, x, bandwidth):
-    return zfit_isj_internal(data.astype(np.float64), x, bandwidth).numpy()
 
-def zfit_adaptive_internal(data, x, bandwidth):
-    obs = zfit.Space('x', limits=(tf.reduce_min(x), tf.reduce_max(x)))
-    dist = GaussianKDE1DimV1(obs=obs, bandwidth='adaptive', data=data)
-    return dist.pdf(x)
+class ZfitFFT:
+    description = 'KDE implemented as Zfit BasePdf using linear binning and the FFT algorithm'
 
-def zfit_adaptive(data, x, bandwidth):
-    return zfit_adaptive_internal(data.astype(np.float64), x, bandwidth).numpy()
+    def __init__(self, data, bandwidth, xlim):
+        obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
+        self._instance = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth)
+    
+    @tf.function(autograph=False)
+    def pdf(self, x):
+        return self._instance.pdf(x)
+
+
+class ZfitFFTwithISJBandwidth:
+    description = 'KDE implemented as Zfit BasePdf using linear binning, the FFT algorithm and bandwith computed with the ISJ algorithm'
+
+    def __init__(self, data, bandwidth, xlim):
+        obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
+        bandwidth = bw_helper.improved_sheather_jones(data)
+        #print(bandwidth)
+        self._instance = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth)
+
+    @tf.function(autograph=False)
+    def pdf(self, x):
+        return self._instance.pdf(x)
+
+
+class ZfitISJ:
+    description = 'KDE implemented as Zfit BasePdf using linear binning and the ISJ algorithm'
+
+    def __init__(self, data, bandwidth, xlim):
+        obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
+        self._instance = KernelDensityEstimationZfitISJ(obs=obs, data=data)
+    
+    @tf.function(autograph=False)
+    def pdf(self, x):
+        return self._instance.pdf(x)
+
+
+class ZfitExactwithAdaptiveBandwidth:
+    description = 'KDE implemented as Zfit wrapped MixtureSameFamily with adaptive bandwidth'
+
+    def __init__(self, data, bandwidth, xlim):
+        obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
+        self._instance = GaussianKDE1DimV1(obs=obs, bandwidth='adaptive', data=data.astype(np.float64))
+    
+    @tf.function(autograph=False)
+    def pdf(self, x):
+        return self._instance.pdf(x)

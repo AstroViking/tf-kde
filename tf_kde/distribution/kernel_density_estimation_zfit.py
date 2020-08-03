@@ -1,6 +1,4 @@
-#  Copyright (c) 2020 zfit
 from typing import Union
-
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
@@ -70,7 +68,6 @@ class KernelDensityEstimation(WrapDistribution):
         self._bandwidth = tf.convert_to_tensor(bandwidth, ztypes.float)
         self._kernel = kernel
         self._weights = weights
-        self._support = support
         self._grid = None
         self._grid_data = None
 
@@ -164,7 +161,7 @@ class KernelDensityEstimationFFT(BasePDF):
 
         self._grid = binning_helper.generate_grid(self._data, num_grid_points=self._num_grid_points)
         self._grid_data = binning_helper.bin(self._binning_method, self._data, self._grid, self._weights)
-        self._grid_convolved_data = convolution_helper.convolve_data_with_kernel(self._kernel, self._bandwidth, self._grid_data, self._grid)
+        self._grid_convolved_data = convolution_helper.convolve_data_with_kernel(self._kernel, self._bandwidth, self._grid_data, self._grid, self._support, self._fft_method)
 
         params = {'bandwidth': self._bandwidth}
         super().__init__(obs=obs, name=name, params=params)

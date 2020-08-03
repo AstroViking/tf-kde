@@ -3,7 +3,7 @@ from zfit import ztypes
 
 import tf_kde.helper.support as support_helper
 
-def convolve_data_with_kernel(kernel, bandwidth, data, grid, fft_method = 'conv1d', support = None):
+def convolve_data_with_kernel(kernel, bandwidth, data, grid, support = None, fft_method = 'conv1d'):
 
         kernel_grid_min = tf.math.reduce_min(grid)
         kernel_grid_max = tf.math.reduce_max(grid)

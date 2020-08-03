@@ -14,7 +14,12 @@ from tf_kde.benchmark import distributions as available_distributions
 from tf_kde.benchmark import methods as available_methods
 
 sns.set()
-plt.rc('legend',fontsize=6)
+plt.rc('axes', titlesize=8) 
+plt.rc('axes', labelsize=6)
+plt.rc('xtick', labelsize=6)
+plt.rc('ytick', labelsize=6) 
+plt.rc('legend', fontsize=6)
+plt.rc('figure', titlesize=8)
 
 def get_silverman_bandwidth(n, d=1): 
     return (n * (d + 2) / 4.)**(-1. / (d + 4))
@@ -129,6 +134,7 @@ def plot_runtime(runtimes, distribution, methods, axes):
     runtime.astype(np.float64).plot(kind='line', y=methods, ax=axes, logy=True,logx=True, title=distribution)
     axes.set_xlabel('Number of samples')
     axes.set_ylabel('Runtime [s]')
+    axes.legend().set_title(None)
 
 
 def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes):
@@ -166,7 +172,7 @@ def plot_distributions(distributions, xlim, n_columns):
         axes[k].set_xlabel('P(x)')
         k +=1
 
-    distribution_object.prob(x).numpy()
+    figure.tight_layout()
 
     return figure, axes
 
@@ -179,6 +185,8 @@ def plot_runtimes(runtimes, distributions, methods):
         plot_runtime(runtimes, distribution, methods, axes[k])
         k += 1
 
+    figure.tight_layout()
+
     return figure, axes
 
 
@@ -189,6 +197,8 @@ def plot_estimations(estimations, distributions, n_samples_to_show, methods):
     for distribution in distributions:
         plot_estimation(estimations, distribution, methods, n_samples_to_show, axes[k])
         k += 1
+
+    figure.tight_layout()
 
     return figure, axes
 
@@ -208,7 +218,7 @@ if __name__ == "__main__":
         #'zfit_ffts',
         #'zfit_fft_with_isj_bandwidth',
         'zfit_isj',
-        'zfit_adaptive'
+        #'zfit_adaptive'
     ]
     distributions_to_evaluate = [
         'gaussian',

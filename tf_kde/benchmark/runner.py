@@ -24,17 +24,18 @@ plt.rc('figure', titlesize=8)
 def get_silverman_bandwidth(n, d=1): 
     return (n * (d + 2) / 4.)**(-1. / (d + 4))
 
-def run_time_benchmark(methods, distributions, n_samples_list, n_runs, n_testpoints, random_seed, additional_run_to_initialize = True, xlim=[-10.0, 10.0]):
+def run_time_benchmark(methods, distributions, n_samples_list, n_testpoints, random_seed, xlim=[-10.0, 10.0], n_runs = 1, n_compilation_runs = 3):
 
-    runtimes = pd.DataFrame(index=pd.MultiIndex.from_product([distributions, n_samples_list], names=['distribution', 'n_samples']), columns=pd.Index(data=methods, name='method'))
+    steps = ['instantiation', 'pdf', 'total']
+    runtimes = pd.DataFrame(index=pd.MultiIndex.from_product([distributions, n_samples_list], names=['distribution', 'n_samples']), columns=pd.MultiIndex.from_product([steps, methods], names=['step', 'method']))
     runtimes = runtimes.sort_index()
 
     x = np.linspace(xlim[0], xlim[1], num=n_testpoints, dtype=np.float32)
 
     for method in methods:
         if hasattr(available_methods, method):
-
-            method_to_call = getattr(available_methods, method)
+            
+            method_to_instantiate = getattr(available_methods, method)
 
             for distribution in distributions:
 
@@ -43,21 +44,26 @@ def run_time_benchmark(methods, distributions, n_samples_list, n_runs, n_testpoi
                     for n_samples in n_samples_list:
 
                         bandwidth = get_silverman_bandwidth(n_samples)
-
                         data = getattr(available_distributions, distribution).sample(sample_shape=n_samples, seed=random_seed).numpy()
 
-                        time = Decimal(0.0)
+                        with Timer('Instantiation') as instantiation_timer:
+                            kde = method_to_instantiate(data, bandwidth, xlim)
+                            instantiation_timer.stop()
 
-                        if additional_run_to_initialize:
-                            method_to_call(data, x, bandwidth)
+                        for k in range(n_compilation_runs):
+                            kde.pdf(x)
 
+                        pdf_time = Decimal(0.0)
                         for k in range(n_runs):
-                            with Timer('Benchmarking') as timer:
-                                method_to_call(data, x, bandwidth)
-                                timer.stop()
-                            time += timer.elapsed
+                            with Timer('pdf') as pdf_timer:
+                                kde.pdf(x)
+                                pdf_timer.stop()  
+                            pdf_time += pdf_timer.elapsed
+                        pdf_time /= n_runs
                         
-                        runtimes.at[(distribution, n_samples), method] = time / n_runs
+                        runtimes.at[(distribution, n_samples), ('instantiation', method)] = instantiation_timer.elapsed
+                        runtimes.at[(distribution, n_samples), ('pdf', method)] = pdf_time
+                        runtimes.at[(distribution, n_samples), ('total', method)] = instantiation_timer.elapsed + pdf_time
 
                 else:
                     raise NameError(f'Distribution \'{distribution}\' is not defined!')
@@ -80,7 +86,7 @@ def run_error_benchmark(methods, distributions, n_samples_list, n_testpoints, ra
     for method in methods:
         if hasattr(available_methods, method):
 
-            method_to_call = getattr(available_methods, method)
+            method_to_instantiate = getattr(available_methods, method)
 
             for distribution in distributions:
                 if hasattr(available_distributions, distribution):
@@ -95,7 +101,9 @@ def run_error_benchmark(methods, distributions, n_samples_list, n_testpoints, ra
                         bandwidth = get_silverman_bandwidth(n_samples)
 
                         data = distribution_object.sample(sample_shape=n_samples, seed=random_seed).numpy()
-                        y_estimate = method_to_call(data, x, bandwidth)
+
+                        kde = method_to_instantiate(data, bandwidth, xlim)
+                        y_estimate = kde.pdf(x)
  
                         estimations.loc[(distribution, n_samples), method] = y_estimate
 
@@ -129,11 +137,13 @@ def generate_subplots(n_distributions, n_columns = 2):
     return figure, axes
 
 
-def plot_runtime(runtimes, distribution, methods, axes):
-    runtime = runtimes.xs(distribution)
+def plot_runtime(runtimes, distribution, methods, step, axes):
+
+    runtime = runtimes.xs(distribution).xs(step, axis=1)
     runtime.astype(np.float64).plot(kind='line', y=methods, ax=axes, logy=True,logx=True, title=distribution)
+
     axes.set_xlabel('Number of samples')
-    axes.set_ylabel('Runtime [s]')
+    axes.set_ylabel(f'{step.capitalize()} runtime [s]')
     axes.legend().set_title(None)
 
 
@@ -177,12 +187,12 @@ def plot_distributions(distributions, xlim, n_columns):
     return figure, axes
 
 
-def plot_runtimes(runtimes, distributions, methods):
+def plot_runtimes(runtimes, distributions, methods, step):
     figure, axes = generate_subplots(len(distributions))
 
     k = 0
     for distribution in distributions:
-        plot_runtime(runtimes, distribution, methods, axes[k])
+        plot_runtime(runtimes, distribution, methods, step, axes[k])
         k += 1
 
     figure.tight_layout()
@@ -210,28 +220,28 @@ if __name__ == "__main__":
     n_runs = 3
     methods_to_evaluate = [
         #'basic',
-        #'kdepy_fft',
-        #'kdepy_fft_isj',
-        #'zfit_binned',
-        #'zfit_simple_binned',
-        #'zfit_fft',
-        #'zfit_ffts',
-        #'zfit_fft_with_isj_bandwidth',
-        'zfit_isj',
-        #'zfit_adaptive'
+        #'KDEpyFFT',
+        #'KDEpyFFTwithISJBandwidth',
+        'ZfitExact',
+        'ZfitBinned',
+        #'ZfitSimpleBinned',
+        'ZfitFFTwithISJBandwidth',
+        #'ZfitFFT',
+        'ZfitISJ',
+        'ZfitExactwithAdaptiveBandwidth'
     ]
     distributions_to_evaluate = [
-        'gaussian',
-        'uniform',
-        'bimodal',
-        'skewed_bimodal',
-        'claw',
-        'asymmetric_double_claw'
+        'Gaussian',
+        #'Uniform',
+        #'Bimodal',
+        #'SkewedBimodal',
+        'Claw',
+        #'AsymmetricDoubleClaw'
     ]
 
     n_samples_list = [
-        1e1,
-        1e2,
+        #1e1,
+        2**8,
         1e3,
         1e4,
         #1e5,
@@ -244,11 +254,13 @@ if __name__ == "__main__":
         10
     ]
 
-    runtimes = run_time_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_runs, n_testpoints, random_seed, True, xlim)
+    runtimes = run_time_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim, n_runs)
     estimations = run_error_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim)
         
     n_samples_to_show = 1e4
 
-    plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate)
+    plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'instantiation')
+    plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'pdf')
+    plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'total')
     plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
     plt.show()

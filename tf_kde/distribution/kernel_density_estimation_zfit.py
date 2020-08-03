@@ -217,7 +217,7 @@ class KernelDensityEstimationISJ(BasePDF):
         shape_data = tf.shape(data)
         size = tf.cast(shape_data[0], ztypes.float)
 
-        self._num_grid_points = num_grid_points
+        self._num_grid_points = tf.minimum(tf.cast(size, ztypes.int), tf.constant(num_grid_points, ztypes.int))
         self._binning_method = binning_method
         self._data = tf.convert_to_tensor(data, ztypes.float)
         self._weights = weights

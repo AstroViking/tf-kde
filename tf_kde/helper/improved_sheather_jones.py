@@ -123,7 +123,7 @@ def _find_root(function, N, squared_integers, grid_data_dct2):
 
 
 def _calculate_t_star(data, num_grid_points, binning_method, weights):
-    
+
     # Setting `percentile` higher decreases the chance of overflow
     grid = binning_helper.generate_grid(data, num_grid_points, 6.0, 0.5)
 
@@ -168,11 +168,17 @@ def _calculate_density(t_star, R, squared_integers, grid_data_dct):
     return density
 
 def calculate_bandwidth(data, num_grid_points = 1024, binning_method = 'linear', weights=None):
+
+    data = tf.cast(data, ztypes.float)
+
     t_star, R, squared_integers, grid_data_dct, grid = _calculate_t_star(data, num_grid_points, binning_method, weights)
 
     return tf.math.sqrt(t_star) * R
 
 def calculate_bandwidth_and_density(data, num_grid_points = 1024, binning_method = 'linear', weights = None):
+
+    data = tf.cast(data, ztypes.float)
+
     t_star, R, squared_integers, grid_data_dct, grid = _calculate_t_star(data, num_grid_points, binning_method, weights)
 
     bandwidth = tf.math.sqrt(t_star) * R

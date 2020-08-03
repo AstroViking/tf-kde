@@ -3,11 +3,11 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 import tensorflow_probability.python.distributions as tfd
 
-gaussian = tfd.Normal(loc=0., scale=1.)
+Gaussian = tfd.Normal(loc=0., scale=1.)
 
-uniform = tfd.Uniform(low=-5., high=5.)
+Uniform = tfd.Uniform(low=-5., high=5.)
 
-bimodal = tfd.Mixture(
+Bimodal = tfd.Mixture(
 
   cat=tfd.Categorical(probs=[1/2, 1/2]),
 
@@ -16,7 +16,7 @@ bimodal = tfd.Mixture(
     tfd.Normal(loc=2, scale=0.5)
 ])
 
-skewed_bimodal = tfd.Mixture(
+SkewedBimodal = tfd.Mixture(
 
   cat=tfd.Categorical(probs=[3/4, 1/4]),
 
@@ -25,7 +25,7 @@ skewed_bimodal = tfd.Mixture(
     tfd.Normal(loc=1.5, scale=1./3.)
 ])
 
-claw = tfd.Mixture(
+Claw = tfd.Mixture(
 
   cat=tfd.Categorical(probs=[1./2., 1./10, 1./10., 1./10., 1./10., 1./10.]),
 
@@ -38,7 +38,7 @@ claw = tfd.Mixture(
     tfd.Normal(loc=1., scale=0.1)
 ])
 
-asymmetric_double_claw = tfd.Mixture(
+AsymmetricDoubleClaw = tfd.Mixture(
 
   cat=tfd.Categorical(probs=[46./100., 46./100, 1./300., 1./300., 1./300., 7./300., 7./300., 7./300.]),
 
@@ -55,7 +55,7 @@ asymmetric_double_claw = tfd.Mixture(
     tfd.Normal(loc=3./2., scale=0.07)
 ])
 
-mix_3gauss_1exp_1uni = tfd.Mixture(
+Mix3gauss1exp1uni = tfd.Mixture(
 
   cat=tfd.Categorical(probs=[0.1, 0.2, 0.1, 0.4, 0.2]),
 

@@ -25,7 +25,7 @@ labels = {
     'zfit_ffts': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT with tf.signal.fft',
     'zfit_fft_with_isj_bandwidth': 'KDE implemented as Zfit wrapped TensorFlow Probability class with Binned Data and FFT and Bandwith computed with ISJ',
     'zfit_isj': 'KDE implemented as Zfit wrapped ISJ method',
-    'zfit_adaptive': 'KDE implemented as Zfit wrapped ISJ method',
+    'zfit_adaptive': 'KDE implemented as Zfit wrapped MixtureSameFamily with adaptive Bandwith calculation',
 }
 
 def basic(data, x, bandwidth):

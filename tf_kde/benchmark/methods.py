@@ -95,7 +95,6 @@ class ZfitFFTwithISJBandwidth:
     def __init__(self, data, bandwidth, xlim):
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         bandwidth = bw_helper.improved_sheather_jones(data)
-        #print(bandwidth)
         self._instance = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth)
 
     @tf.function(autograph=False)

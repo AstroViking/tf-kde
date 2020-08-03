@@ -127,6 +127,8 @@ def generate_subplots(n_distributions, n_columns = 2):
 def plot_runtime(runtimes, distribution, methods, axes):
     runtime = runtimes.xs(distribution)
     runtime.astype(np.float64).plot(kind='line', y=methods, ax=axes, logy=True,logx=True, title=distribution)
+    axes.set_xlabel('Number of samples')
+    axes.set_ylabel('Runtime [s]')
 
 
 def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes):
@@ -145,6 +147,8 @@ def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes)
             labels[key] = label + f' (ISE: {integrated_square_errors[label]:.3e})'
 
     axes.legend(handles, labels)
+    axes.set_xlabel('x')
+    axes.set_ylabel('P(x)')
 
 
 def plot_distributions(distributions, xlim, n_columns):
@@ -158,6 +162,8 @@ def plot_distributions(distributions, xlim, n_columns):
         y = distribution_object.prob(x).numpy()
         axes[k].plot(x, y)
         axes[k].set_title(distribution)
+        axes[k].set_xlabel('x')
+        axes[k].set_xlabel('P(x)')
         k +=1
 
     distribution_object.prob(x).numpy()
@@ -194,15 +200,15 @@ if __name__ == "__main__":
     n_runs = 3
     methods_to_evaluate = [
         #'basic',
-        'kdepy_fft',
+        #'kdepy_fft',
         #'kdepy_fft_isj',
-        'zfit_binned',
+        #'zfit_binned',
         #'zfit_simple_binned',
-        'zfit_fft',
+        #'zfit_fft',
         #'zfit_ffts',
-        'zfit_fft_with_isj_bandwidth',
+        #'zfit_fft_with_isj_bandwidth',
         'zfit_isj',
-        #'zfit_adaptive'
+        'zfit_adaptive'
     ]
     distributions_to_evaluate = [
         'gaussian',
@@ -218,9 +224,9 @@ if __name__ == "__main__":
         1e2,
         1e3,
         1e4,
-        1e5,
-        1e6,
-        1e7
+        #1e5,
+        #1e6,
+        #1e7
     ]
 
     xlim = [
@@ -231,7 +237,7 @@ if __name__ == "__main__":
     runtimes = run_time_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_runs, n_testpoints, random_seed, True, xlim)
     estimations = run_error_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim)
         
-    n_samples_to_show = 1e7
+    n_samples_to_show = 1e4
 
     plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate)
     plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)

@@ -15,4 +15,5 @@ setup(name='tf_kde',
       license='WTFPL',
       packages=['tf_kde'],
       install_requires=requirements,
+      scripts=['tf_kde/benchmark/bin/tf_kde_run_benchmark'],
       zip_safe=False)

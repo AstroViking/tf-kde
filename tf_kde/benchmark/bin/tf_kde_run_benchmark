@@ -1,0 +1,139 @@
+import argparse
+import os
+import sys
+from pathlib import Path
+
+from tf_kde.benchmark import runner
+
+parser = argparse.ArgumentParser(description='Run the benchmark suite from tf_kde', prog='tf_kde_run_benchmark')
+parser.add_argument('-d', '--dir',
+    metavar='<directory path>', 
+    type=str, 
+    nargs=1,
+    default=os.getcwd(),
+    help='The path to the output directory')
+
+parser.add_argument('-t', '--type',
+    metavar='cpu,gpu', 
+    type=str, 
+    nargs=1,
+    default='cpu',
+    help='The path to the output directory')
+
+arguments = parser.parse_args()
+
+benchmark_type = arguments.type
+output_path = arguments.dir
+
+if not os.path.isdir(output_path):
+    print('The specified output directory does not exist!')
+    sys.exit()
+
+output_path = f'{output_path}/{benchmark_type}_benchmark'
+
+Path(f'{output_path}').mkdir(parents=True, exist_ok=True)
+
+n_runs = 1
+random_seed = 756454
+n_testpoints = 256
+methods_to_evaluate = [
+    'KDEpyFFT',
+    'KDEpyFFTwithISJBandwidth',
+    'ZfitExact',
+    'ZfitExactwithAdaptiveBandwidth',
+    'ZfitSimpleBinned',
+    'ZfitBinned',
+    'ZfitFFTwithISJBandwidth',
+    'ZfitFFT',
+    'ZfitISJ'
+]
+distributions_to_evaluate = [
+    'Gaussian',
+    'Uniform',
+    'Bimodal',
+    'SkewedBimodal',
+    'Claw',
+    'AsymmetricDoubleClaw'
+]
+n_samples_list = [
+    1e3,
+    1e4,
+    1e5,
+    1e6,
+    1e7
+]
+
+xlim = [
+    -10,
+    10
+]
+
+if(benchmark_type == 'gpu'):
+    n_samples_list.extend([1e8])
+    n_testpoints = 1024
+    n_runs = 3
+
+
+# Run benchmark
+runtimes = runner.run_time_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim, n_runs)
+runtimes.to_pickle(f'{output_path}/runtimes.pkl')
+
+estimations = runner.run_error_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim)
+runtimes.to_pickle(f'{output_path}/estimations.pkl')
+
+# Compare zfit methods
+prefix = 'all_zfit'
+methods_to_plot = [
+    'ZfitExact',
+    'ZfitExactwithAdaptiveBandwidth',
+    'ZfitSimpleBinned',
+    'ZfitBinned',
+    'ZfitFFT',
+    'ZfitFFTwithISJBandwidth',
+    'ZfitISJ'
+]
+
+Path(f'{output_path}/{prefix}').mkdir(parents=True, exist_ok=True)
+figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'instantiation')
+figure.savefig(f'{output_path}/{prefix}/_instantiation_runtime.pdf')
+
+figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'pdf')
+figure.savefig(f'{output_path}/{prefix}/_pdf_runtime.pdf')
+
+figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'total')
+figure.savefig(f'{output_path}/{prefix}/_total_runtime.pdf')
+
+n_samples_to_show = 1e4
+figure, axes = runner.plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
+figure.savefig(f'{output_path}/plots/{prefix}_estimations.pdf')
+
+
+
+# Compare against KDEpy
+prefix = 'kdepy'
+methods_to_plot = [
+    'KDEpyFFT',
+    'KDEpyFFTwithISJBandwidth',
+    'ZfitFFT',
+    'ZfitFFTwithISJBandwidth',
+    'ZfitISJ'
+]
+
+Path(f'{output_path}/{prefix}').mkdir(parents=True, exist_ok=True)
+figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'instantiation')
+figure.savefig(f'{output_path}/{prefix}/_instantiation_runtime.pdf')
+
+figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'pdf')
+figure.savefig(f'{output_path}/{prefix}/_pdf_runtime.pdf')
+
+figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'total')
+figure.savefig(f'{output_path}/{prefix}/_total_runtime.pdf')
+
+n_samples_to_show = 1e4
+figure, axes = runner.plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
+figure.savefig(f'{output_path}/plots/{prefix}_estimations.pdf')
+
+
+
+
+

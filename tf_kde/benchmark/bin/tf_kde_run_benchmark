@@ -91,17 +91,17 @@ methods_to_plot = [
 
 Path(f'{output_path}/{prefix}').mkdir(parents=True, exist_ok=True)
 figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'instantiation')
-figure.savefig(f'{output_path}/{prefix}/_instantiation_runtime.pdf')
+figure.savefig(f'{output_path}/{prefix}/instantiation_runtime.pdf')
 
 figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'pdf')
-figure.savefig(f'{output_path}/{prefix}/_pdf_runtime.pdf')
+figure.savefig(f'{output_path}/{prefix}/pdf_runtime.pdf')
 
 figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'total')
-figure.savefig(f'{output_path}/{prefix}/_total_runtime.pdf')
+figure.savefig(f'{output_path}/{prefix}/total_runtime.pdf')
 
 n_samples_to_show = 1e4
 figure, axes = runner.plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
-figure.savefig(f'{output_path}/plots/{prefix}_estimations.pdf')
+figure.savefig(f'{output_path}/plots/{prefix}/estimations.pdf')
 
 
 # Compare against KDEpy
@@ -116,17 +116,17 @@ methods_to_plot = [
 
 Path(f'{output_path}/{prefix}').mkdir(parents=True, exist_ok=True)
 figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'instantiation')
-figure.savefig(f'{output_path}/{prefix}/_instantiation_runtime.pdf')
+figure.savefig(f'{output_path}/{prefix}/instantiation_runtime.pdf')
 
 figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'pdf')
-figure.savefig(f'{output_path}/{prefix}/_pdf_runtime.pdf')
+figure.savefig(f'{output_path}/{prefix}/pdf_runtime.pdf')
 
 figure, axes = runner.plot_runtimes(runtimes, distributions_to_evaluate, methods_to_evaluate, 'total')
-figure.savefig(f'{output_path}/{prefix}/_total_runtime.pdf')
+figure.savefig(f'{output_path}/{prefix}/total_runtime.pdf')
 
 n_samples_to_show = 1e4
 figure, axes = runner.plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
-figure.savefig(f'{output_path}/plots/{prefix}_estimations.pdf')
+figure.savefig(f'{output_path}/plots/{prefix}/estimations.pdf')
 
 
 # Run separate benchmarks for exact KDEs or else they would blow up
@@ -157,21 +157,14 @@ estimations_restricted = runner.run_error_benchmark(methods_to_evaluate, distrib
 
 Path(f'{output_path}/{prefix}').mkdir(parents=True, exist_ok=True)
 figure, axes = runner.plot_runtimes(runtimes_restricted, distributions_to_evaluate, methods_to_evaluate, 'instantiation')
-figure.savefig(f'{output_path}/{prefix}/_instantiation_runtime.pdf')
+figure.savefig(f'{output_path}/{prefix}/instantiation_runtime.pdf')
 
 figure, axes = runner.plot_runtimes(runtimes_restricted, distributions_to_evaluate, methods_to_evaluate, 'pdf')
-figure.savefig(f'{output_path}/{prefix}/_pdf_runtime.pdf')
+figure.savefig(f'{output_path}/{prefix}/pdf_runtime.pdf')
 
 figure, axes = runner.plot_runtimes(runtimes_restricted, distributions_to_evaluate, methods_to_evaluate, 'total')
-figure.savefig(f'{output_path}/{prefix}/_total_runtime.pdf')
+figure.savefig(f'{output_path}/{prefix}/total_runtime.pdf')
 
 n_samples_to_show = 1e4
 figure, axes = runner.plot_estimations(estimations_restricted, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
-figure.savefig(f'{output_path}/plots/{prefix}_estimations.pdf')
-
-
-
-
-
-
-
+figure.savefig(f'{output_path}/plots/{prefix}/estimations.pdf')

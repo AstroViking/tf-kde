@@ -120,9 +120,10 @@ def calculate_integrated_square_errors(estimation, methods):
     integrated_square_errors = {}
 
     for method in methods:
+        x = estimation.index.to_numpy()
         square_error = (estimation.loc[:, method] - estimation.loc[:, 'actual'])**2
-        spline = UnivariateSpline(estimation.index.to_numpy(), square_error)
-        integrated_square_errors[method] = spline.integral(xlim[0], xlim[1])
+        spline = UnivariateSpline(x, square_error)
+        integrated_square_errors[method] = spline.integral(np.min(x), np.max(x))
     
     return integrated_square_errors
 

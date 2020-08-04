@@ -12,7 +12,7 @@ class KDEpy:
     description = 'KDE using KDEpy.NaiveKDE'
     
     def __init__(self, data, bandwidth, xlim = None):
-        self._instance = NaiveKDE(kernel="gaussian", bw=bandwidth).fit(data).evaluate(x)
+        self._instance = NaiveKDE(kernel="gaussian", bw=bandwidth).fit(data)
     
     def pdf(self, x):
         x = np.array(x)
@@ -23,7 +23,7 @@ class KDEpyFFT:
     description = 'KDE using KDEpy.FFTKDE'
 
     def __init__(self, data, bandwidth, xlim = None):
-        self._instance = FFTKDE(kernel="gaussian", bw=bandwidth).fit(data).evaluate(x)
+        self._instance = FFTKDE(kernel="gaussian", bw=bandwidth).fit(data)
     
     def pdf(self, x):
         x = np.array(x)
@@ -34,7 +34,7 @@ class KDEpyFFTwithISJBandwidth:
     description = 'KDE using KDEpy.FFTKDE and ISJ bandwidth'
 
     def __init__(self, data, bandwidth, xlim = None):
-        self._instance = FFTKDE(kernel="gaussian", bw='ISJ').fit(data).evaluate(x)
+        self._instance = FFTKDE(kernel="gaussian", bw='ISJ').fit(data)
     
     def pdf(self, x):
         x = np.array(x)

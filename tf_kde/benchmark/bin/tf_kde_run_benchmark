@@ -39,8 +39,6 @@ n_testpoints = 256
 methods_to_evaluate = [
     'KDEpyFFT',
     'KDEpyFFTwithISJBandwidth',
-    'ZfitExact',
-    'ZfitExactwithAdaptiveBandwidth',
     'ZfitSimpleBinned',
     'ZfitBinned',
     'ZfitFFTwithISJBandwidth',
@@ -81,11 +79,9 @@ runtimes.to_pickle(f'{output_path}/runtimes.pkl')
 estimations = runner.run_error_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim)
 runtimes.to_pickle(f'{output_path}/estimations.pkl')
 
-# Compare zfit methods
-prefix = 'all_zfit'
+# Compare new zfit methods against themselves
+prefix = 'zfit_new'
 methods_to_plot = [
-    'ZfitExact',
-    'ZfitExactwithAdaptiveBandwidth',
     'ZfitSimpleBinned',
     'ZfitBinned',
     'ZfitFFT',
@@ -106,7 +102,6 @@ figure.savefig(f'{output_path}/{prefix}/_total_runtime.pdf')
 n_samples_to_show = 1e4
 figure, axes = runner.plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
 figure.savefig(f'{output_path}/plots/{prefix}_estimations.pdf')
-
 
 
 # Compare against KDEpy
@@ -132,6 +127,49 @@ figure.savefig(f'{output_path}/{prefix}/_total_runtime.pdf')
 n_samples_to_show = 1e4
 figure, axes = runner.plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
 figure.savefig(f'{output_path}/plots/{prefix}_estimations.pdf')
+
+
+# Run separate benchmarks for exact KDEs or else they would blow up
+prefix = 'zfit_exact'
+n_runs = 1
+n_datapoints = 256
+
+methods_to_evaluate = [
+    'ZfitExact',
+    'ZfitExactwithAdaptiveBandwidth'
+    'ZfitSimpleBinned',
+    'ZfitBinned',
+    'ZfitFFTwithISJBandwidth',
+    'ZfitFFT',
+    'ZfitISJ'
+]
+n_samples_list = [
+    1e3,
+    2e3,
+    3e3,
+    4e3,
+    5e3,
+    1e4,
+]
+
+runtimes_restricted = runner.run_time_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim, n_runs)
+estimations_restricted = runner.run_error_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim)
+
+Path(f'{output_path}/{prefix}').mkdir(parents=True, exist_ok=True)
+figure, axes = runner.plot_runtimes(runtimes_restricted, distributions_to_evaluate, methods_to_evaluate, 'instantiation')
+figure.savefig(f'{output_path}/{prefix}/_instantiation_runtime.pdf')
+
+figure, axes = runner.plot_runtimes(runtimes_restricted, distributions_to_evaluate, methods_to_evaluate, 'pdf')
+figure.savefig(f'{output_path}/{prefix}/_pdf_runtime.pdf')
+
+figure, axes = runner.plot_runtimes(runtimes_restricted, distributions_to_evaluate, methods_to_evaluate, 'total')
+figure.savefig(f'{output_path}/{prefix}/_total_runtime.pdf')
+
+n_samples_to_show = 1e4
+figure, axes = runner.plot_estimations(estimations_restricted, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
+figure.savefig(f'{output_path}/plots/{prefix}_estimations.pdf')
+
+
 
 
 

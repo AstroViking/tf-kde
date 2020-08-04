@@ -179,7 +179,7 @@ def plot_distributions(distributions, xlim, n_columns):
         axes[k].plot(x, y)
         axes[k].set_title(distribution)
         axes[k].set_xlabel('x')
-        axes[k].set_xlabel('P(x)')
+        axes[k].set_ylabel('P(x)')
         k +=1
 
     figure.tight_layout()
@@ -222,21 +222,21 @@ if __name__ == "__main__":
         #'basic',
         #'KDEpyFFT',
         #'KDEpyFFTwithISJBandwidth',
-        'ZfitExact',
+        #'ZfitExact',
         'ZfitBinned',
         #'ZfitSimpleBinned',
         'ZfitFFTwithISJBandwidth',
         #'ZfitFFT',
         'ZfitISJ',
-        'ZfitExactwithAdaptiveBandwidth'
+        #'ZfitExactwithAdaptiveBandwidth'
     ]
     distributions_to_evaluate = [
         'Gaussian',
-        #'Uniform',
-        #'Bimodal',
-        #'SkewedBimodal',
+        'Uniform',
+        'Bimodal',
+        'SkewedBimodal',
         'Claw',
-        #'AsymmetricDoubleClaw'
+        'AsymmetricDoubleClaw'
     ]
 
     n_samples_list = [
@@ -244,9 +244,9 @@ if __name__ == "__main__":
         2**8,
         1e3,
         1e4,
-        #1e5,
-        #1e6,
-        #1e7
+        1e5,
+        1e6,
+        1e7
     ]
 
     xlim = [

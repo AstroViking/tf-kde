@@ -1,8 +1,5 @@
 import tensorflow as tf
 import numpy as np
-import zfit as zfit
-from KDEpy import NaiveKDE, FFTKDE
-from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimationBasic, KernelDensityEstimationZfit
 from zfit_benchmark.timer import Timer
 import matplotlib.pyplot as plt
 import seaborn as sns

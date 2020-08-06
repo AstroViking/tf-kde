@@ -168,10 +168,10 @@ def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes)
     axes.set_ylabel('P(x)')
 
 
-def plot_distributions(distributions, xlim, n_columns):
+def plot_distributions(distributions, xlim):
     x = np.linspace(xlim[0], xlim[1], num=1000, dtype=np.float64)
 
-    figure, axes = generate_subplots(len(distributions), n_columns)
+    figure, axes = generate_subplots(len(distributions))
 
     k = 0
     for distribution in distributions:

@@ -13,8 +13,8 @@ parser.add_argument('-d', '--dir',
     default=os.getcwd(),
     help='The path to the output directory')
 
-parser.add_argument('-t', '--type',
-    metavar='cpu,gpu', 
+parser.add_argument('-p', '--prefix',
+    metavar='<prefix>', 
     type=str, 
     nargs=1,
     default='cpu',
@@ -22,7 +22,7 @@ parser.add_argument('-t', '--type',
 
 arguments = parser.parse_args()
 
-benchmark_type = arguments.type
+benchmark_type = arguments.prefix
 output_path = arguments.dir
 
 if not os.path.isdir(output_path):
@@ -33,8 +33,9 @@ output_path = f'{output_path}/{benchmark_type}_benchmark'
 
 Path(f'{output_path}').mkdir(parents=True, exist_ok=True)
 
-n_runs = 1
 random_seed = 756454
+
+n_runs = 3
 n_testpoints = 256
 methods_to_evaluate = [
     'KDEpyFFT',
@@ -58,26 +59,25 @@ n_samples_list = [
     1e4,
     1e5,
     1e6,
-    1e7
+    1e7,
+    1e8
 ]
 
 xlim = [
-    -10,
-    10
+    -8,
+    8
 ]
 
-if(benchmark_type == 'gpu'):
-    n_samples_list.extend([1e8])
-    n_testpoints = 1024
-    n_runs = 3
-
+# Plot test distributions
+figure, axes = runner.plot_distributions(distributions_to_evaluate, xlim)
+figure.savefig(f'{output_path}/distributions.pdf')
 
 # Run benchmark
 runtimes = runner.run_time_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim, n_runs)
-runtimes.to_pickle(f'{output_path}/runtimes.pkl')
+runtimes.to_pickle(f'{output_path}/unrestricted_runtimes.pkl')
 
 estimations = runner.run_error_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim)
-runtimes.to_pickle(f'{output_path}/estimations.pkl')
+estimations.to_pickle(f'{output_path}/unrestricted_estimations.pkl')
 
 # Compare new zfit methods against themselves
 prefix = 'zfit_new'
@@ -101,7 +101,7 @@ figure.savefig(f'{output_path}/{prefix}/total_runtime.pdf')
 
 n_samples_to_show = 1e4
 figure, axes = runner.plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
-figure.savefig(f'{output_path}/plots/{prefix}/estimations.pdf')
+figure.savefig(f'{output_path}/{prefix}/estimations.pdf')
 
 
 # Compare against KDEpy
@@ -126,7 +126,7 @@ figure.savefig(f'{output_path}/{prefix}/total_runtime.pdf')
 
 n_samples_to_show = 1e4
 figure, axes = runner.plot_estimations(estimations, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
-figure.savefig(f'{output_path}/plots/{prefix}/estimations.pdf')
+figure.savefig(f'{output_path}/{prefix}/estimations.pdf')
 
 
 # Run separate benchmarks for exact KDEs or else they would blow up
@@ -153,7 +153,11 @@ n_samples_list = [
 ]
 
 runtimes_restricted = runner.run_time_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim, n_runs)
+runtimes_restricted.to_pickle(f'{output_path}/restricted_runtimes.pkl')
+
 estimations_restricted = runner.run_error_benchmark(methods_to_evaluate, distributions_to_evaluate, n_samples_list, n_testpoints, random_seed, xlim)
+estimations_restricted.to_pickle(f'{output_path}/restricted_estimations.pkl')
+
 
 Path(f'{output_path}/{prefix}').mkdir(parents=True, exist_ok=True)
 figure, axes = runner.plot_runtimes(runtimes_restricted, distributions_to_evaluate, methods_to_evaluate, 'instantiation')
@@ -167,4 +171,4 @@ figure.savefig(f'{output_path}/{prefix}/total_runtime.pdf')
 
 n_samples_to_show = 1e4
 figure, axes = runner.plot_estimations(estimations_restricted, distributions_to_evaluate, n_samples_to_show, methods_to_evaluate)
-figure.savefig(f'{output_path}/plots/{prefix}/estimations.pdf')
+figure.savefig(f'{output_path}/{prefix}/estimations.pdf')

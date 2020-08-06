@@ -1,7 +1,8 @@
 import tensorflow as tf
 from zfit import ztypes
 
-import tf_kde.helper.support as support_helper
+from tf_kde.helper import support as support_helper
+
 
 def convolve_data_with_kernel(kernel, bandwidth, data, grid, support = None, fft_method = 'conv1d'):
 

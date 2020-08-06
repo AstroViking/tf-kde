@@ -136,7 +136,7 @@ n_datapoints = 256
 
 methods_to_evaluate = [
     'ZfitExact',
-    'ZfitExactwithAdaptiveBandwidth'
+    'ZfitExactwithAdaptiveBandwidth',
     'ZfitSimpleBinned',
     'ZfitBinned',
     'ZfitFFTwithISJBandwidth',

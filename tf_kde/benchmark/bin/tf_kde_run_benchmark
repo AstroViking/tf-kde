@@ -135,6 +135,9 @@ n_runs = 1
 n_datapoints = 256
 
 methods_to_evaluate = [
+    'KDEpy',
+    'KDEpyFFT',
+    'KDEpyFFTwithISJBandwidth',
     'ZfitExact',
     'ZfitExactwithAdaptiveBandwidth',
     'ZfitSimpleBinned',

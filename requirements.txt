@@ -1,4 +1,4 @@
-zfit>=0.5.4
+zfit>=0.5.5
 zfit_benchmark@git+git://github.com/zfit/benchmarks.git#egg=zfit_benchmark
 tf_quant_finance>=v0.0.1-dev24
 KDEpy

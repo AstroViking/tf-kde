@@ -191,6 +191,13 @@ def plot_runtimes(runtimes, distributions, methods, step):
     k = 0
     for distribution in distributions:
         plot_runtime(runtimes, distribution, methods, step, axes[k])
+
+        if k == 0:
+            handles, labels = axes[k].get_legend_handles_labels()
+            figure.legend(handles, labels, loc='lower center')
+
+        axes[k].get_legend().remove()
+
         k += 1
 
     figure.tight_layout()
@@ -204,6 +211,13 @@ def plot_estimations(estimations, distributions, n_samples_to_show, methods):
     k = 0
     for distribution in distributions:
         plot_estimation(estimations, distribution, methods, n_samples_to_show, axes[k])
+
+        if k == 0:
+            handles, labels = axes[k].get_legend_handles_labels()
+            figure.legend(handles, labels, loc='lower center')
+
+        axes[k].get_legend().remove()
+
         k += 1
 
     figure.tight_layout()

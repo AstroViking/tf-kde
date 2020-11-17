@@ -135,7 +135,11 @@ def generate_subplots(n_distributions, n_columns = 2):
     return figure, axes
 
 
-def plot_runtime(runtimes, distribution, methods, step, axes):
+def plot_runtime(runtimes, distribution, methods, step, axes=None):
+
+    if axes is None:
+        axes = plt.axes()
+    figure = axes.figure
 
     runtime = runtimes.xs(distribution).xs(step, axis=1)
     runtime.astype(np.float64).plot(kind='line', y=methods, ax=axes, logy=True,logx=True, title=distribution)
@@ -144,8 +148,14 @@ def plot_runtime(runtimes, distribution, methods, step, axes):
     axes.set_ylabel(f'{step.capitalize()} runtime [s]')
     axes.legend().set_title(None)
 
+    return figure, axes
 
-def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes):
+
+def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes=None):
+
+    if axes is None:
+        axes = plt.axes()
+    figure = axes.figure
 
     methods_to_show = ['actual']
     methods_to_show.extend(methods)
@@ -163,6 +173,28 @@ def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes)
     axes.legend(handles, labels)
     axes.set_xlabel('x')
     axes.set_ylabel('P(x)')
+
+    return figure, axes
+
+
+def plot_integrated_square_error(estimations, distribution, methods, n_samples_to_show, axes=None):
+
+    if axes is None:
+        axes = plt.axes()
+    figure = axes.figure
+    
+    methods_to_show = ['actual']
+    methods_to_show.extend(methods)
+
+    estimation = estimations.xs((distribution, n_samples_to_show))
+    integrated_square_errors = calculate_integrated_square_errors(estimation, methods)
+
+    axes.set_title(distribution)
+    axes.bar(list(integrated_square_errors.keys()), list(integrated_square_errors.values()))
+    axes.set_xlabel('Method')
+    axes.set_ylabel('ISE')
+
+    return figure, axes
 
 
 def plot_distributions(distributions, xlim):
@@ -217,6 +249,20 @@ def plot_estimations(estimations, distributions, n_samples_to_show, methods):
             figure.legend(handles, labels, loc='lower center')
 
         axes[k].get_legend().remove()
+
+        k += 1
+
+    figure.tight_layout()
+
+    return figure, axes
+
+
+def plot_integrated_square_errors(estimations, distributions, n_samples_to_show, methods):
+    figure, axes = generate_subplots(len(distributions))
+
+    k = 0
+    for distribution in distributions:
+        plot_integrated_square_error(estimations, distribution, methods, n_samples_to_show, axes[k])
 
         k += 1
 

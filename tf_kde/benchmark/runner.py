@@ -138,8 +138,9 @@ def generate_subplots(n_distributions, n_columns = 2):
 def plot_runtime(runtimes, distribution, methods, step, axes=None):
 
     if axes is None:
-        axes = plt.axes()
-    figure = axes.figure
+        figure, axes = plt.subplots()
+    else:
+        figure = axes.figure
 
     runtime = runtimes.xs(distribution).xs(step, axis=1)
     runtime.astype(np.float64).plot(kind='line', y=methods, ax=axes, logy=True,logx=True, title=distribution)
@@ -154,8 +155,9 @@ def plot_runtime(runtimes, distribution, methods, step, axes=None):
 def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes=None):
 
     if axes is None:
-        axes = plt.axes()
-    figure = axes.figure
+        figure, axes = plt.subplots()
+    else:
+        figure = axes.figure
 
     methods_to_show = ['actual']
     methods_to_show.extend(methods)
@@ -180,8 +182,9 @@ def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes=
 def plot_integrated_square_error(estimations, distribution, methods, n_samples_to_show, axes=None):
 
     if axes is None:
-        axes = plt.axes()
-    figure = axes.figure
+        figure, axes = plt.subplots()
+    else:
+        figure = axes.figure
     
     methods_to_show = ['actual']
     methods_to_show.extend(methods)

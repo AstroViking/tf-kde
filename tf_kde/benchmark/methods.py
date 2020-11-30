@@ -4,16 +4,16 @@ import zfit as zfit
 from KDEpy import NaiveKDE, FFTKDE
 import seaborn as sns
 from zfit.pdf import GaussianKDE1DimV1
-from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimationBasic, KernelDensityEstimationZfit, KernelDensityEstimationZfitFFT, KernelDensityEstimationZfitISJ 
+from tf_kde.distribution import KernelDensityEstimation, KernelDensityEstimationBasic, KernelDensityEstimationZfit, KernelDensityEstimationZfitFFT, KernelDensityEstimationZfitISJ, KernelDensityEstimationZfitHofmeyr 
 from tf_kde.helper import bandwidth as bw_helper
 
 
 class KDEpy: 
     description = 'KDE using KDEpy.NaiveKDE'
-    
+
     def __init__(self, data, bandwidth, xlim = None):
         self._instance = NaiveKDE(kernel="gaussian", bw=bandwidth).fit(data)
-    
+
     def pdf(self, x):
         x = np.array(x)
         return self._instance.evaluate(x)
@@ -24,7 +24,7 @@ class KDEpyFFT:
 
     def __init__(self, data, bandwidth, xlim = None):
         self._instance = FFTKDE(kernel="gaussian", bw=bandwidth).fit(data)
-    
+
     def pdf(self, x):
         x = np.array(x)
         return self._instance.evaluate(x)
@@ -35,7 +35,7 @@ class KDEpyFFTwithISJBandwidth:
 
     def __init__(self, data, bandwidth, xlim = None):
         self._instance = FFTKDE(kernel="gaussian", bw='ISJ').fit(data)
-    
+
     def pdf(self, x):
         x = np.array(x)
         return self._instance.evaluate(x)
@@ -71,7 +71,7 @@ class ZfitSimpleBinned:
     def __init__(self, data, bandwidth, xlim):
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth, use_grid=True, binning_method='simple')
- 
+
     @tf.function(autograph=False)
     def pdf(self, x):
         return self._instance.pdf(x)
@@ -83,7 +83,7 @@ class ZfitFFT:
     def __init__(self, data, bandwidth, xlim):
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth)
-    
+
     @tf.function(autograph=False)
     def pdf(self, x):
         return self._instance.pdf(x)
@@ -108,7 +108,7 @@ class ZfitISJ:
     def __init__(self, data, bandwidth, xlim):
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = KernelDensityEstimationZfitISJ(obs=obs, data=data)
-    
+
     @tf.function(autograph=False)
     def pdf(self, x):
         return self._instance.pdf(x)
@@ -120,7 +120,52 @@ class ZfitExactwithAdaptiveBandwidth:
     def __init__(self, data, bandwidth, xlim):
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = GaussianKDE1DimV1(obs=obs, bandwidth='adaptive', data=data.astype(np.float64))
-    
+
+    @tf.function(autograph=False)
+    def pdf(self, x):
+        return self._instance.pdf(x)
+
+class ZfitHofmeyrK1:
+    description = 'KDE implemented using Kernels of the form poly(x) * exp(x)'
+
+    def __init__(self, data, bandwidth, xlim):
+        obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
+        self._instance = KernelDensityEstimationZfitHofmeyr(obs=obs, data=data, bandwidth=bandwidth, implementation='tensorflow')
+
+    @tf.function(autograph=False)
+    def pdf(self, x):
+        return self._instance.pdf(x)
+
+class ZfitHofmeyrK1withNumpy:
+    description = 'KDE implemented using Kernels of the form poly(x) * exp(x) using tf.numpy_function'
+
+    def __init__(self, data, bandwidth, xlim):
+        obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
+        self._instance = KernelDensityEstimationZfitHofmeyr(obs=obs, data=data, bandwidth=bandwidth, implementation='numpy')
+
+    @tf.function(autograph=False)
+    def pdf(self, x):
+        return self._instance.pdf(x)
+
+class ZfitHofmeyrK1withCpp:
+    description = 'KDE implemented using Kernels of the form poly(x) * exp(x) using tf.numpy_function'
+
+    def __init__(self, data, bandwidth, xlim):
+        obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
+        self._instance = KernelDensityEstimationZfitHofmeyr(obs=obs, data=data, bandwidth=bandwidth, implementation='cpp')
+
+    @tf.function(autograph=False)
+    def pdf(self, x):
+        return self._instance.pdf(x)
+
+class ZfitHofmeyrK1withCppAndISJBandwidth:
+    description = 'KDE implemented using Kernels of the form poly(x) * exp(x) using tf.numpy_function'
+
+    def __init__(self, data, bandwidth, xlim):
+        obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
+        bandwidth = bw_helper.improved_sheather_jones(data)
+        self._instance = KernelDensityEstimationZfitHofmeyr(obs=obs, data=data, bandwidth=bandwidth, implementation='cpp')
+
     @tf.function(autograph=False)
     def pdf(self, x):
         return self._instance.pdf(x)

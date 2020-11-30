@@ -45,6 +45,8 @@ methods_to_evaluate = [
     'ZfitFFTwithISJBandwidth',
     'ZfitFFT',
     'ZfitISJ'
+    'ZfitHofmeyrK1withCpp',
+    'ZfitHofmeyrK1withCppAndISJBandwidth'
 ]
 distributions_to_evaluate = [
     'Gaussian',
@@ -86,7 +88,9 @@ methods_to_plot = [
     'ZfitBinned',
     'ZfitFFT',
     'ZfitFFTwithISJBandwidth',
-    'ZfitISJ'
+    'ZfitISJ',
+    'ZfitHofmeyrK1withCpp',
+    'ZfitHofmeyrK1withCppAndISJBandwidth'
 ]
 
 Path(f'{output_path}/{prefix}').mkdir(parents=True, exist_ok=True)
@@ -111,7 +115,9 @@ methods_to_plot = [
     'KDEpyFFTwithISJBandwidth',
     'ZfitFFT',
     'ZfitFFTwithISJBandwidth',
-    'ZfitISJ'
+    'ZfitISJ',
+    'ZfitHofmeyrK1withCpp',
+    'ZfitHofmeyrK1withCppAndISJBandwidth'
 ]
 
 Path(f'{output_path}/{prefix}').mkdir(parents=True, exist_ok=True)
@@ -144,7 +150,9 @@ methods_to_evaluate = [
     'ZfitBinned',
     'ZfitFFTwithISJBandwidth',
     'ZfitFFT',
-    'ZfitISJ'
+    'ZfitISJ',
+    'ZfitHofmeyrK1withCpp',
+    'ZfitHofmeyrK1withCppAndISJBandwidth'
 ]
 n_samples_list = [
     1e3,

@@ -44,7 +44,7 @@ methods_to_evaluate = [
     'ZfitBinned',
     'ZfitFFTwithISJBandwidth',
     'ZfitFFT',
-    'ZfitISJ'
+    'ZfitISJ',
     'ZfitHofmeyrK1withCpp',
     'ZfitHofmeyrK1withCppAndISJBandwidth'
 ]

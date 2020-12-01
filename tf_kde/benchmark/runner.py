@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+from zfit import ztypes
 from zfit_benchmark.timer import Timer
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -17,8 +18,7 @@ plt.rc('axes', titlesize=8)
 plt.rc('axes', labelsize=6)
 plt.rc('xtick', labelsize=6)
 plt.rc('ytick', labelsize=6) 
-plt.rc('legend', fontsize=6, facecolor='white', loc='lower right', ncol=2, fancybox=True, shadow=True)
-plt.rc('figure', titlesize=8)
+plt.rc('legend', fontsize=6)
 plt.rc('figure', titlesize=8)
 
 colormap = plt.get_cmap('gist_rainbow')
@@ -43,7 +43,7 @@ def run_time_benchmark(methods, distributions, n_samples_list, n_testpoints, ran
     runtimes = pd.DataFrame(index=pd.MultiIndex.from_product([distributions, n_samples_list], names=['distribution', 'n_samples']), columns=pd.MultiIndex.from_product([steps, methods], names=['step', 'method']))
     runtimes = runtimes.sort_index()
 
-    x = np.linspace(xlim[0], xlim[1], num=n_testpoints, dtype=np.float32)
+    x = tf.linspace(tf.cast(xlim[0], ztypes.float), tf.cast(xlim[1], ztypes.float), num=n_testpoints)
 
     for method in methods:
         if hasattr(available_methods, method):
@@ -88,12 +88,12 @@ def run_time_benchmark(methods, distributions, n_samples_list, n_testpoints, ran
 
 def run_error_benchmark(methods, distributions, n_samples_list, n_testpoints, random_seed, xlim=[-10.0, 10.0]):
 
-    x = np.linspace(xlim[0], xlim[1], num=n_testpoints, dtype=np.float32)
+    x = tf.linspace(tf.cast(xlim[0], ztypes.float), tf.cast(xlim[1], ztypes.float), num=n_testpoints)
 
     y = ['actual']
     y.extend(methods)
 
-    estimations = pd.DataFrame(index=pd.MultiIndex.from_product([distributions, n_samples_list, x], names=['distribution', 'n_samples', 'x']), columns=pd.Index(y, name='y'))
+    estimations = pd.DataFrame(index=pd.MultiIndex.from_product([distributions, n_samples_list, x.numpy()], names=['distribution', 'n_samples', 'x']), columns=pd.Index(y, name='y'))
     estimations = estimations.sort_index()
 
     for method in methods:
@@ -105,7 +105,7 @@ def run_error_benchmark(methods, distributions, n_samples_list, n_testpoints, ra
                 if hasattr(available_distributions, distribution):
 
                     distribution_object = getattr(available_distributions, distribution)
-                    y_actual = distribution_object.prob(x).numpy()
+                    y_actual = distribution_object.prob(tf.cast(x, tf.float32)).numpy()
 
                     for n_samples in n_samples_list:
 
@@ -161,7 +161,7 @@ def plot_runtime(runtimes, distribution, methods, step, axes=None):
     runtime = runtimes.xs(distribution).xs(step, axis=1)
     runtime.astype(np.float64).plot(kind='line', y=methods, color=method_colors, ax=axes, logy=True, logx=True, title=distribution)
 
-    axes.set_xlabel('Number of samples')
+    axes.set_xlabel('Number of samples ($N$)')
     axes.set_ylabel(f'{step.capitalize()} runtime [s]')
     axes.legend().set_title(None)
 
@@ -186,11 +186,11 @@ def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes=
 
     for key, label in enumerate(labels):
         if label != 'actual':
-            labels[key] = label + f' (ISE: {integrated_square_errors[label]:.3e})'
+            labels[key] = label + f' ($ISE$: {integrated_square_errors[label]:.3e})'
 
     axes.legend(handles, labels)
-    axes.set_xlabel('x')
-    axes.set_ylabel('P(x)')
+    axes.set_xlabel('$x$')
+    axes.set_ylabel('$P(x)$')
 
     return figure, axes
 
@@ -209,9 +209,9 @@ def plot_integrated_square_error(estimations, distribution, methods, axes=None):
         integrated_square_errors_list[n_samples] = calculate_integrated_square_errors(specific_estimation.xs(n_samples), methods)
 
     integrated_square_errors = pd.DataFrame.from_dict(integrated_square_errors_list, orient='index')
-    integrated_square_errors.astype(np.float64).plot(kind='line', y=methods, color=method_colors, ax=axes, title=distribution)
+    integrated_square_errors.astype(np.float64).plot(kind='line', y=methods, color=method_colors, ax=axes, logy=True, logx=True, title=distribution)
 
-    axes.set_xlabel('Number of samples')
+    axes.set_xlabel('Number of samples ($N$)')
     axes.set_ylabel('$ISE$')
 
     return figure, axes
@@ -230,7 +230,7 @@ def plot_bar_integrated_square_error(estimations, distribution, methods, n_sampl
     axes.set_title(distribution)
     axes.bar(list(integrated_square_errors.keys()), list(integrated_square_errors.values()))
     axes.set_xlabel('Method')
-    axes.set_ylabel('ISE')
+    axes.set_ylabel('$ISE$')
 
     return figure, axes
 
@@ -246,8 +246,8 @@ def plot_distributions(distributions, xlim):
         y = distribution_object.prob(x).numpy()
         axes[k].plot(x, y, color=method_colors['actual'])
         axes[k].set_title(distribution)
-        axes[k].set_xlabel('x')
-        axes[k].set_ylabel('P(x)')
+        axes[k].set_xlabel('$x$')
+        axes[k].set_ylabel('$P(x)$')
         k +=1
 
     figure.tight_layout()
@@ -264,13 +264,15 @@ def plot_runtimes(runtimes, distributions, methods, step):
 
         if k == 0:
             handles, labels = axes[k].get_legend_handles_labels()
-            figure.legend(handles, labels, bbox_to_anchor=[0.5, -0.05])
-
         axes[k].get_legend().remove()
 
         k += 1
 
     figure.tight_layout()
+    figure.legend(handles, labels, ncol=10, loc='lower right', bbox_transform=figure.transFigure, borderpad=1)
+    figure.set_figheight(7)
+    figure.set_figwidth(8)
+    figure.subplots_adjust(bottom = 1.0/8.0)
 
     return figure, axes
 
@@ -284,13 +286,16 @@ def plot_estimations(estimations, distributions, n_samples_to_show, methods):
 
         if k == 0:
             handles, labels = axes[k].get_legend_handles_labels()
-            figure.legend(handles, labels, loc='upper right')
 
         axes[k].get_legend().remove()
 
         k += 1
 
     figure.tight_layout()
+    figure.legend(handles, labels, ncol=10, loc='lower right', bbox_transform=figure.transFigure, borderpad=1)
+    figure.set_figheight(7)
+    figure.set_figwidth(8)
+    figure.subplots_adjust(bottom = 1.0/8.0)
 
     return figure, axes
 
@@ -304,13 +309,16 @@ def plot_integrated_square_errors(estimations, distributions, methods):
 
         if k == 0:
             handles, labels = axes[k].get_legend_handles_labels()
-            figure.legend(handles, labels, loc='upper right')
 
         axes[k].get_legend().remove()
 
         k += 1
 
     figure.tight_layout()
+    figure.legend(handles, labels, ncol=10, loc='lower right', bbox_transform=figure.transFigure, borderpad=1)
+    figure.set_figheight(7)
+    figure.set_figwidth(8)
+    figure.subplots_adjust(bottom = 1.0/8.0)
 
     return figure, axes
 

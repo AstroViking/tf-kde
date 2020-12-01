@@ -15,7 +15,7 @@ class KDEpy:
         self._instance = NaiveKDE(kernel="gaussian", bw=bandwidth).fit(data)
 
     def pdf(self, x):
-        x = np.array(x)
+        x = x.numpy()
         return self._instance.evaluate(x)
 
 
@@ -26,7 +26,7 @@ class KDEpyFFT:
         self._instance = FFTKDE(kernel="gaussian", bw=bandwidth).fit(data)
 
     def pdf(self, x):
-        x = np.array(x)
+        x = x.numpy()
         return self._instance.evaluate(x)
 
 
@@ -37,7 +37,7 @@ class KDEpyFFTwithISJBandwidth:
         self._instance = FFTKDE(kernel="gaussian", bw='ISJ').fit(data)
 
     def pdf(self, x):
-        x = np.array(x)
+        x = x.numpy()
         return self._instance.evaluate(x)
 
 
@@ -48,7 +48,7 @@ class ZfitExact:
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth)
 
-    @tf.function(autograph=False)
+    @tf.function(autograph=False, experimental_relax_shapes=True)
     def pdf(self, x):
         return self._instance.pdf(x)
 
@@ -60,7 +60,7 @@ class ZfitBinned:
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth, use_grid=True)
 
-    @tf.function(autograph=False)
+    @tf.function(autograph=False, experimental_relax_shapes=True)
     def pdf(self, x):
         return self._instance.pdf(x)
 
@@ -72,7 +72,7 @@ class ZfitSimpleBinned:
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = KernelDensityEstimationZfit(obs=obs, data=data, bandwidth=bandwidth, use_grid=True, binning_method='simple')
 
-    @tf.function(autograph=False)
+    @tf.function(autograph=False, experimental_relax_shapes=True)
     def pdf(self, x):
         return self._instance.pdf(x)
 
@@ -84,7 +84,7 @@ class ZfitFFT:
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth)
 
-    @tf.function(autograph=False)
+    @tf.function(autograph=False, experimental_relax_shapes=True)
     def pdf(self, x):
         return self._instance.pdf(x)
 
@@ -97,7 +97,7 @@ class ZfitFFTwithISJBandwidth:
         bandwidth = bw_helper.improved_sheather_jones(data)
         self._instance = KernelDensityEstimationZfitFFT(obs=obs, data=data, bandwidth=bandwidth)
 
-    @tf.function(autograph=False)
+    @tf.function(autograph=False, experimental_relax_shapes=True)
     def pdf(self, x):
         return self._instance.pdf(x)
 
@@ -109,7 +109,7 @@ class ZfitISJ:
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = KernelDensityEstimationZfitISJ(obs=obs, data=data)
 
-    @tf.function(autograph=False)
+    @tf.function(autograph=False, experimental_relax_shapes=True)
     def pdf(self, x):
         return self._instance.pdf(x)
 
@@ -121,7 +121,7 @@ class ZfitExactwithAdaptiveBandwidth:
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = GaussianKDE1DimV1(obs=obs, bandwidth='adaptive', data=data.astype(np.float64))
 
-    @tf.function(autograph=False)
+    @tf.function(autograph=False, experimental_relax_shapes=True)
     def pdf(self, x):
         return self._instance.pdf(x)
 
@@ -132,7 +132,7 @@ class ZfitHofmeyrK1:
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = KernelDensityEstimationZfitHofmeyr(obs=obs, data=data, bandwidth=bandwidth, implementation='tensorflow')
 
-    @tf.function(autograph=False)
+    @tf.function(autograph=False, experimental_relax_shapes=True)
     def pdf(self, x):
         return self._instance.pdf(x)
 
@@ -143,7 +143,7 @@ class ZfitHofmeyrK1withNumpy:
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = KernelDensityEstimationZfitHofmeyr(obs=obs, data=data, bandwidth=bandwidth, implementation='numpy')
 
-    @tf.function(autograph=False)
+    @tf.function(autograph=False, experimental_relax_shapes=True)
     def pdf(self, x):
         return self._instance.pdf(x)
 
@@ -154,7 +154,7 @@ class ZfitHofmeyrK1withCpp:
         obs = zfit.Space('x', limits=(xlim[0], xlim[1]))
         self._instance = KernelDensityEstimationZfitHofmeyr(obs=obs, data=data, bandwidth=bandwidth, implementation='cpp')
 
-    @tf.function(autograph=False)
+    @tf.function(autograph=False, experimental_relax_shapes=True)
     def pdf(self, x):
         return self._instance.pdf(x)
 
@@ -166,6 +166,6 @@ class ZfitHofmeyrK1withCppAndISJBandwidth:
         bandwidth = bw_helper.improved_sheather_jones(data)
         self._instance = KernelDensityEstimationZfitHofmeyr(obs=obs, data=data, bandwidth=bandwidth, implementation='cpp')
 
-    @tf.function(autograph=False)
+    @tf.function(autograph=False, experimental_relax_shapes=True)
     def pdf(self, x):
         return self._instance.pdf(x)

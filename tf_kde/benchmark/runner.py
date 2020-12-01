@@ -4,6 +4,7 @@ from zfit_benchmark.timer import Timer
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
+import inspect
 from decimal import Decimal
 from scipy.interpolate import UnivariateSpline
 
@@ -11,12 +12,27 @@ from tf_kde.benchmark import distributions as available_distributions
 from tf_kde.benchmark import methods as available_methods
 
 sns.set()
+sns.set_context("paper")
 plt.rc('axes', titlesize=8) 
 plt.rc('axes', labelsize=6)
 plt.rc('xtick', labelsize=6)
 plt.rc('ytick', labelsize=6) 
-plt.rc('legend', fontsize=6)
+plt.rc('legend', fontsize=6, facecolor='white', loc='lower right', ncol=2, fancybox=True, shadow=True)
 plt.rc('figure', titlesize=8)
+plt.rc('figure', titlesize=8)
+
+colormap = plt.get_cmap('gist_rainbow')
+
+method_count = 0
+method_colors = {
+    'actual': colormap(0)
+}
+
+for method in inspect.getmembers(available_methods, inspect.isclass): method_count += 1
+method_index = 1
+for method, cls in inspect.getmembers(available_methods, inspect.isclass):
+    method_colors[method] = colormap(1.*method_index/method_count)
+    method_index += 1
 
 def get_silverman_bandwidth(n, d=1): 
     return (n * (d + 2) / 4.)**(-1. / (d + 4))
@@ -143,7 +159,7 @@ def plot_runtime(runtimes, distribution, methods, step, axes=None):
         figure = axes.figure
 
     runtime = runtimes.xs(distribution).xs(step, axis=1)
-    runtime.astype(np.float64).plot(kind='line', y=methods, ax=axes, logy=True,logx=True, title=distribution)
+    runtime.astype(np.float64).plot(kind='line', y=methods, color=method_colors, ax=axes, logy=True, logx=True, title=distribution)
 
     axes.set_xlabel('Number of samples')
     axes.set_ylabel(f'{step.capitalize()} runtime [s]')
@@ -163,7 +179,7 @@ def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes=
     methods_to_show.extend(methods)
 
     estimation = estimations.xs((distribution, n_samples_to_show))
-    estimation.astype(np.float64).plot(kind='line', y=methods_to_show, ax=axes, title=distribution)
+    estimation.astype(np.float64).plot(kind='line', y=methods_to_show, color=method_colors, ax=axes, title=distribution)
 
     integrated_square_errors = calculate_integrated_square_errors(estimation, methods)
     handles, labels = axes.get_legend_handles_labels()
@@ -179,15 +195,34 @@ def plot_estimation(estimations, distribution, methods, n_samples_to_show, axes=
     return figure, axes
 
 
-def plot_integrated_square_error(estimations, distribution, methods, n_samples_to_show, axes=None):
+def plot_integrated_square_error(estimations, distribution, methods, axes=None):
 
     if axes is None:
         figure, axes = plt.subplots()
     else:
         figure = axes.figure
-    
-    methods_to_show = ['actual']
-    methods_to_show.extend(methods)
+
+    estimation = estimations.xs(distribution)
+
+    integrated_square_errors_list = {}
+    for n_samples, specific_estimation in estimation.groupby('n_samples'):
+        integrated_square_errors_list[n_samples] = calculate_integrated_square_errors(specific_estimation.xs(n_samples), methods)
+
+    integrated_square_errors = pd.DataFrame.from_dict(integrated_square_errors_list, orient='index')
+    integrated_square_errors.astype(np.float64).plot(kind='line', y=methods, color=method_colors, ax=axes, title=distribution)
+
+    axes.set_xlabel('Number of samples')
+    axes.set_ylabel('$ISE$')
+
+    return figure, axes
+
+
+def plot_bar_integrated_square_error(estimations, distribution, methods, n_samples_to_show, axes=None):
+
+    if axes is None:
+        figure, axes = plt.subplots()
+    else:
+        figure = axes.figure
 
     estimation = estimations.xs((distribution, n_samples_to_show))
     integrated_square_errors = calculate_integrated_square_errors(estimation, methods)
@@ -209,7 +244,7 @@ def plot_distributions(distributions, xlim):
     for distribution in distributions:
         distribution_object = getattr(available_distributions, distribution)
         y = distribution_object.prob(x).numpy()
-        axes[k].plot(x, y)
+        axes[k].plot(x, y, color=method_colors['actual'])
         axes[k].set_title(distribution)
         axes[k].set_xlabel('x')
         axes[k].set_ylabel('P(x)')
@@ -229,7 +264,7 @@ def plot_runtimes(runtimes, distributions, methods, step):
 
         if k == 0:
             handles, labels = axes[k].get_legend_handles_labels()
-            figure.legend(handles, labels, loc='lower center')
+            figure.legend(handles, labels, bbox_to_anchor=[0.5, -0.05])
 
         axes[k].get_legend().remove()
 
@@ -249,7 +284,7 @@ def plot_estimations(estimations, distributions, n_samples_to_show, methods):
 
         if k == 0:
             handles, labels = axes[k].get_legend_handles_labels()
-            figure.legend(handles, labels, loc='lower center')
+            figure.legend(handles, labels, loc='upper right')
 
         axes[k].get_legend().remove()
 
@@ -260,12 +295,32 @@ def plot_estimations(estimations, distributions, n_samples_to_show, methods):
     return figure, axes
 
 
-def plot_integrated_square_errors(estimations, distributions, n_samples_to_show, methods):
+def plot_integrated_square_errors(estimations, distributions, methods):
     figure, axes = generate_subplots(len(distributions))
 
     k = 0
     for distribution in distributions:
-        plot_integrated_square_error(estimations, distribution, methods, n_samples_to_show, axes[k])
+        plot_integrated_square_error(estimations, distribution, methods, axes[k])
+
+        if k == 0:
+            handles, labels = axes[k].get_legend_handles_labels()
+            figure.legend(handles, labels, loc='upper right')
+
+        axes[k].get_legend().remove()
+
+        k += 1
+
+    figure.tight_layout()
+
+    return figure, axes
+
+
+def plot_bar_integrated_square_errors(estimations, distributions, n_samples_to_show, methods):
+    figure, axes = generate_subplots(len(distributions))
+
+    k = 0
+    for distribution in distributions:
+        plot_bar_integrated_square_error(estimations, distribution, methods, n_samples_to_show, axes[k])
 
         k += 1
 

@@ -161,7 +161,7 @@ def plot_runtime(runtimes, distribution, methods, step, axes=None):
     runtime = runtimes.xs(distribution).xs(step, axis=1)
     runtime.astype(np.float64).plot(kind='line', y=methods, color=method_colors, ax=axes, logy=True, logx=True, title=distribution)
 
-    axes.set_xlabel('Number of samples ($N$)')
+    axes.set_xlabel('Number of samples ($n$)')
     axes.set_ylabel(f'{step.capitalize()} runtime [s]')
     axes.legend().set_title(None)
 
@@ -211,7 +211,7 @@ def plot_integrated_square_error(estimations, distribution, methods, axes=None):
     integrated_square_errors = pd.DataFrame.from_dict(integrated_square_errors_list, orient='index')
     integrated_square_errors.astype(np.float64).plot(kind='line', y=methods, color=method_colors, ax=axes, logy=True, logx=True, title=distribution)
 
-    axes.set_xlabel('Number of samples ($N$)')
+    axes.set_xlabel('Number of samples ($n$)')
     axes.set_ylabel('$ISE$')
 
     return figure, axes
